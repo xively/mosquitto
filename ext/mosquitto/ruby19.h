@@ -1,0 +1,4 @@
+#ifndef MOSQUITTO_RUBY19_H
+#define MOSQUITTO_RUBY19_H
+
+#endif

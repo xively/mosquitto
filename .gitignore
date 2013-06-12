@@ -15,7 +15,6 @@ true/*
 *.gem
 doc/*
 .DS_Store
-ext/mosquitto
 pkg
 scratch
 ext/mosquitto/Makefile
