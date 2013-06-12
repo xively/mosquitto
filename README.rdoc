@@ -1,0 +1,18 @@
+= mosquito - Ruby binding against libmosquitto (http://mosquitto.org/) - a high performance MQTT protocol (http://mqtt.org) client {<img src="https://secure.travis-ci.org/bear-metal/mosquitto.png" alt="Build Status" />}[http://travis-ci.org/bear-metal/mosquitto]
+
+(c) 2013 Lourens Naudé (methodmissing), Bear Metal OÜ (http://bearmetal.eu)
+
+  http://github.com/bear-metal/mosquitto
+
+== About MQTT
+
+== Example usage
+
+== Requirements
+
+== Installation
+
+== Contact, feedback and bugs
+
+== Resources
+
