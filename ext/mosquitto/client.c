@@ -118,11 +118,11 @@ static VALUE rb_mosquitto_client_reinitialise_nogvl(void *ptr)
 VALUE rb_mosquitto_client_reinitialise(int argc, VALUE *argv, VALUE obj)
 {
     struct nogvl_reinitialise_args args;
-    MosquittoGetClient(obj);
     VALUE client_id;
     int ret;
     bool clean_session;
     char *cl_id = NULL;
+    MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &client_id);
     if (NIL_P(client_id)) {
         clean_session = true;
@@ -150,12 +150,12 @@ VALUE rb_mosquitto_client_reinitialise(int argc, VALUE *argv, VALUE obj)
 
 VALUE rb_mosquitto_client_will_set(VALUE obj, VALUE topic, VALUE payload, VALUE qos, VALUE retain)
 {
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     Check_Type(topic, T_STRING);
     Check_Type(payload, T_STRING);
     Check_Type(qos, T_FIXNUM);
-    ret = mosquitto_will_set(client->mosq, StringValueCStr(topic), RSTRING_LEN(payload), StringValueCStr(payload), NUM2INT(qos), ((retain == Qtrue) ? true : false));
+    ret = mosquitto_will_set(client->mosq, StringValueCStr(topic), (int)RSTRING_LEN(payload), StringValueCStr(payload), NUM2INT(qos), ((retain == Qtrue) ? true : false));
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -173,8 +173,8 @@ VALUE rb_mosquitto_client_will_set(VALUE obj, VALUE topic, VALUE payload, VALUE 
 
 VALUE rb_mosquitto_client_will_clear(VALUE obj)
 {
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     ret = mosquitto_will_clear(client->mosq);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -187,8 +187,8 @@ VALUE rb_mosquitto_client_will_clear(VALUE obj)
 
 VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
 {
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     Check_Type(username, T_STRING);
     Check_Type(password, T_STRING);
     ret = mosquitto_username_pw_set(client->mosq, StringValueCStr(username), StringValueCStr(password));
@@ -213,8 +213,8 @@ static VALUE rb_mosquitto_client_connect_nogvl(void *ptr)
 VALUE rb_mosquitto_client_connect(VALUE obj, VALUE host, VALUE port, VALUE keepalive)
 {
     struct nogvl_connect_args args;
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     Check_Type(host, T_STRING);
     Check_Type(port, T_FIXNUM);
     Check_Type(keepalive, T_FIXNUM);
@@ -244,8 +244,8 @@ static VALUE rb_mosquitto_client_connect_async_nogvl(void *ptr)
 VALUE rb_mosquitto_client_connect_async(VALUE obj, VALUE host, VALUE port, VALUE keepalive)
 {
     struct nogvl_connect_args args;
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     Check_Type(host, T_STRING);
     Check_Type(port, T_FIXNUM);
     Check_Type(keepalive, T_FIXNUM);
@@ -273,8 +273,8 @@ VALUE rb_mosquitto_client_reconnect_nogvl(void *ptr)
 
 VALUE rb_mosquitto_client_reconnect(VALUE obj)
 {
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     ret = (int)rb_thread_blocking_region(rb_mosquitto_client_reconnect_nogvl, (void *)&client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -295,8 +295,8 @@ VALUE rb_mosquitto_client_disconnect_nogvl(void *ptr)
 
 VALUE rb_mosquitto_client_disconnect(VALUE obj)
 {
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     ret = (int)rb_thread_blocking_region(rb_mosquitto_client_disconnect_nogvl, (void *)&client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -319,19 +319,19 @@ static VALUE rb_mosquitto_client_publish_nogvl(void *ptr)
 VALUE rb_mosquitto_client_publish(VALUE obj, VALUE mid, VALUE topic, VALUE payload, VALUE qos, VALUE retain)
 {
     struct nogvl_publish_args args;
-    MosquittoGetClient(obj);
     int ret, msg_id;
+    MosquittoGetClient(obj);
     Check_Type(topic, T_STRING);
     Check_Type(payload, T_STRING);
     Check_Type(qos, T_FIXNUM);
     if (!NIL_P(mid)) {
         Check_Type(mid, T_FIXNUM);
-        msg_id = INT2NUM(mid);
+        msg_id = NUM2INT(mid);
     }
     args.mosq = client->mosq;
     args.mid = NIL_P(mid) ? NULL : &msg_id;
     args.topic = StringValueCStr(topic);
-    args.payloadlen = RSTRING_LEN(payload);
+    args.payloadlen = (int)RSTRING_LEN(payload);
     args.payload = (const char *)StringValueCStr(payload);
     args.qos = NUM2INT(qos);
     args.retain = (retain == Qtrue) ? true : false;
@@ -366,13 +366,13 @@ static VALUE rb_mosquitto_client_subscribe_nogvl(void *ptr)
 VALUE rb_mosquitto_client_subscribe(VALUE obj, VALUE mid, VALUE subscription, VALUE qos)
 {
     struct nogvl_subscribe_args args;
-    MosquittoGetClient(obj);
     int ret, msg_id;
+    MosquittoGetClient(obj);
     Check_Type(subscription, T_STRING);
     Check_Type(qos, T_FIXNUM);
     if (!NIL_P(mid)) {
         Check_Type(mid, T_FIXNUM);
-        msg_id = INT2NUM(mid);
+        msg_id = NUM2INT(mid);
     }
     args.mosq = client->mosq;
     args.mid = NIL_P(mid) ? NULL : &msg_id;
@@ -403,12 +403,12 @@ static VALUE rb_mosquitto_client_unsubscribe_nogvl(void *ptr)
 VALUE rb_mosquitto_client_unsubscribe(VALUE obj, VALUE mid, VALUE subscription)
 {
     struct nogvl_subscribe_args args;
-    MosquittoGetClient(obj);
     int ret, msg_id;
+    MosquittoGetClient(obj);
     Check_Type(subscription, T_STRING);
     if (!NIL_P(mid)) {
         Check_Type(mid, T_FIXNUM);
-        msg_id = INT2NUM(mid);
+        msg_id = NUM2INT(mid);
     }
     args.mosq = client->mosq;
     args.mid = NIL_P(mid) ? NULL : &msg_id;
@@ -431,8 +431,8 @@ VALUE rb_mosquitto_client_unsubscribe(VALUE obj, VALUE mid, VALUE subscription)
 
 VALUE rb_mosquitto_client_socket(VALUE obj)
 {
-    MosquittoGetClient(obj);
     int socket;
+    MosquittoGetClient(obj);
     socket = mosquitto_socket(client->mosq);
     return INT2NUM(socket);
 }
@@ -446,8 +446,8 @@ static VALUE rb_mosquitto_client_loop_nogvl(void *ptr)
 VALUE rb_mosquitto_client_loop(VALUE obj, VALUE timeout, VALUE max_packets)
 {
     struct nogvl_loop_args args;
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     args.mosq = client->mosq;
     args.timeout = NUM2INT(timeout);
     args.max_packets = NUM2INT(max_packets);
@@ -485,8 +485,8 @@ static VALUE rb_mosquitto_client_loop_forever_nogvl(void *ptr)
 VALUE rb_mosquitto_client_loop_forever(VALUE obj, VALUE timeout, VALUE max_packets)
 {
     struct nogvl_loop_args args;
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     Check_Type(timeout, T_FIXNUM);
     Check_Type(max_packets, T_FIXNUM);
     args.mosq = client->mosq;
@@ -512,8 +512,8 @@ VALUE rb_mosquitto_client_loop_start_nogvl(void *ptr)
 
 VALUE rb_mosquitto_client_loop_start(VALUE obj)
 {
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_start_nogvl, (void *)&client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -536,8 +536,8 @@ VALUE rb_mosquitto_client_loop_stop_nogvl(void *ptr)
 VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
 {
     struct nogvl_loop_stop_args args;
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     args.mosq = client->mosq;
     args.force = ((force == Qtrue) ? true : false);
     ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_stop_nogvl, (void *)&args, RUBY_UBF_IO, 0);
@@ -562,8 +562,8 @@ static VALUE rb_mosquitto_client_loop_read_nogvl(void *ptr)
 VALUE rb_mosquitto_client_loop_read(VALUE obj, VALUE max_packets)
 {
     struct nogvl_loop_args args;
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     Check_Type(max_packets, T_FIXNUM);
     args.mosq = client->mosq;
     args.max_packets = NUM2INT(max_packets);
@@ -601,8 +601,8 @@ static VALUE rb_mosquitto_client_loop_write_nogvl(void *ptr)
 VALUE rb_mosquitto_client_loop_write(VALUE obj, VALUE max_packets)
 {
     struct nogvl_loop_args args;
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     Check_Type(max_packets, T_FIXNUM);
     args.mosq = client->mosq;
     args.max_packets = NUM2INT(max_packets);
@@ -638,8 +638,8 @@ VALUE rb_mosquitto_client_loop_misc_nogvl(void *ptr)
 
 VALUE rb_mosquitto_client_loop_misc(VALUE obj)
 {
-    MosquittoGetClient(obj);
     int ret;
+    MosquittoGetClient(obj);
     ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_misc_nogvl, (void *)&client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -655,16 +655,15 @@ VALUE rb_mosquitto_client_loop_misc(VALUE obj)
 
 VALUE rb_mosquitto_client_want_write(VALUE obj)
 {
-    MosquittoGetClient(obj);
     bool ret;
+    MosquittoGetClient(obj);
     ret = mosquitto_want_write(client->mosq);
     return (ret == true) ? Qtrue : Qfalse;
 }
 
 VALUE rb_mosquitto_client_on_connect(int argc, VALUE *argv, VALUE obj)
 {
-    VALUE proc;
-    VALUE cb;
+    VALUE proc, cb;
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
@@ -675,8 +674,7 @@ VALUE rb_mosquitto_client_on_connect(int argc, VALUE *argv, VALUE obj)
 
 VALUE rb_mosquitto_client_on_disconnect(int argc, VALUE *argv, VALUE obj)
 {
-    VALUE proc;
-    VALUE cb;
+    VALUE proc, cb;
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 0);
@@ -687,8 +685,7 @@ VALUE rb_mosquitto_client_on_disconnect(int argc, VALUE *argv, VALUE obj)
 
 VALUE rb_mosquitto_client_on_publish(int argc, VALUE *argv, VALUE obj)
 {
-    VALUE proc;
-    VALUE cb;
+    VALUE proc, cb;
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
@@ -699,8 +696,7 @@ VALUE rb_mosquitto_client_on_publish(int argc, VALUE *argv, VALUE obj)
 
 VALUE rb_mosquitto_client_on_message(int argc, VALUE *argv, VALUE obj)
 {
-    VALUE proc;
-    VALUE cb;
+    VALUE proc, cb;
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
@@ -711,8 +707,7 @@ VALUE rb_mosquitto_client_on_message(int argc, VALUE *argv, VALUE obj)
 
 VALUE rb_mosquitto_client_on_subscribe(int argc, VALUE *argv, VALUE obj)
 {
-    VALUE proc;
-    VALUE cb;
+    VALUE proc, cb;
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 3);
@@ -723,8 +718,7 @@ VALUE rb_mosquitto_client_on_subscribe(int argc, VALUE *argv, VALUE obj)
 
 VALUE rb_mosquitto_client_on_unsubscribe(int argc, VALUE *argv, VALUE obj)
 {
-    VALUE proc;
-    VALUE cb;
+    VALUE proc, cb;
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
@@ -735,8 +729,7 @@ VALUE rb_mosquitto_client_on_unsubscribe(int argc, VALUE *argv, VALUE obj)
 
 VALUE rb_mosquitto_client_on_log(int argc, VALUE *argv, VALUE obj)
 {
-    VALUE proc;
-    VALUE cb;
+    VALUE proc, cb;
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 2);
@@ -749,7 +742,7 @@ void _init_rb_mosquitto_client()
 {
     rb_cMosquittoClient = rb_define_class_under(rb_mMosquitto, "Client", rb_cObject);
 
-    // Init / setup
+    /* Init / setup */
 
     rb_define_singleton_method(rb_cMosquittoClient, "new", rb_mosquitto_client_s_new, -1);
     rb_define_method(rb_cMosquittoClient, "reinitialise", rb_mosquitto_client_reinitialise, -1);
@@ -757,7 +750,7 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "will_clear", rb_mosquitto_client_will_clear, 0);
     rb_define_method(rb_cMosquittoClient, "auth", rb_mosquitto_client_auth, 2);
 
-    // Network
+    /* Network */
 
     rb_define_method(rb_cMosquittoClient, "connect", rb_mosquitto_client_connect, 3);
     rb_define_method(rb_cMosquittoClient, "connect_async", rb_mosquitto_client_connect_async, 3);
@@ -775,7 +768,7 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "loop_write", rb_mosquitto_client_loop_write, 1);
     rb_define_method(rb_cMosquittoClient, "loop_misc", rb_mosquitto_client_loop_misc, 0);
 
-    // Callbacks
+    /* Callbacks */
 
     rb_define_method(rb_cMosquittoClient, "on_connect", rb_mosquitto_client_on_connect, -1);
     rb_define_method(rb_cMosquittoClient, "on_disconnect", rb_mosquitto_client_on_disconnect, -1);
