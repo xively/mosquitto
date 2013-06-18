@@ -41,9 +41,7 @@ void rb_mosquitto_client_on_unsubscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, v
 void rb_mosquitto_client_on_log_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int level, const char *str)
 {
     MosquittoGetClient((VALUE)obj);
-	printf("XXX\n");
     rb_funcall(client->log_cb, intern_call, 2, INT2NUM(level), rb_str_new2(str));
-	printf("YYY\n");
 }
 
 static void rb_mosquitto_mark_client(void *ptr)
@@ -275,7 +273,7 @@ VALUE rb_mosquitto_client_reconnect(VALUE obj)
 {
     int ret;
     MosquittoGetClient(obj);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_reconnect_nogvl, (void *)&client->mosq, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_reconnect_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -297,7 +295,7 @@ VALUE rb_mosquitto_client_disconnect(VALUE obj)
 {
     int ret;
     MosquittoGetClient(obj);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_disconnect_nogvl, (void *)&client->mosq, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_disconnect_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -514,7 +512,7 @@ VALUE rb_mosquitto_client_loop_start(VALUE obj)
 {
     int ret;
     MosquittoGetClient(obj);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_start_nogvl, (void *)&client->mosq, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_start_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -640,7 +638,7 @@ VALUE rb_mosquitto_client_loop_misc(VALUE obj)
 {
     int ret;
     MosquittoGetClient(obj);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_misc_nogvl, (void *)&client->mosq, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_misc_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
