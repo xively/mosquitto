@@ -516,6 +516,8 @@ VALUE rb_mosquitto_client_loop(VALUE obj, VALUE timeout, VALUE max_packets)
     struct nogvl_loop_args args;
     int ret;
     MosquittoGetClient(obj);
+    Check_Type(timeout, T_FIXNUM);
+    Check_Type(max_packets, T_FIXNUM);
     args.mosq = client->mosq;
     args.timeout = NUM2INT(timeout);
     args.max_packets = NUM2INT(max_packets);
