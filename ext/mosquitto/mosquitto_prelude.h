@@ -8,7 +8,7 @@
 #ifdef RUBINIUS
 #include "rubinius.h"
 #else
-#ifdef HAVE_RB_THREAD_BLOCKING_REGION
+#ifdef HAVE_RB_THREAD_CALL_WITHOUT_GVL
 #include "ruby19.h"
 #else
 #include "ruby18.h"

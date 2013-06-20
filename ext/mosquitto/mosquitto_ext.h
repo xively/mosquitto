@@ -27,7 +27,6 @@ extern VALUE rb_cMosquittoClient;
 extern VALUE rb_cMosquittoMessage;
 
 extern VALUE intern_call;
-extern VALUE intern_arity;
 
 #include "client.h"
 #include "message.h"

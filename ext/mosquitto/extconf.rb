@@ -1,8 +1,10 @@
 require 'mkmf'
 
+RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
+
 dir_config('mosquitto')
 
-have_func('rb_thread_blocking_region')
+have_func('rb_thread_call_without_gvl')
 find_header("mosquitto.h")
 have_library('mosquitto')
 

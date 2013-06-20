@@ -6,7 +6,6 @@ VALUE rb_cMosquittoClient;
 VALUE rb_cMosquittoMessage;
 
 VALUE intern_call;
-VALUE intern_arity;
 
 rb_encoding *binary_encoding;
 
@@ -15,12 +14,17 @@ static VALUE rb_mosquitto_version(MOSQ_UNUSED VALUE obj)
     return INT2NUM(mosquitto_lib_version(NULL, NULL, NULL));
 }
 
+static VALUE rb_mosquitto_cleanup(MOSQ_UNUSED VALUE obj)
+{
+    mosquitto_lib_cleanup();
+    return Qnil;
+}
+
 void Init_mosquitto_ext()
 {
     mosquitto_lib_init();
 
     intern_call = rb_intern("call");
-    intern_arity = rb_intern("arity");
 
     binary_encoding = rb_enc_find("binary");
 
@@ -33,6 +37,7 @@ void Init_mosquitto_ext()
     rb_eMosquittoError = rb_define_class_under(rb_mMosquitto, "Error", rb_eStandardError);
 
     rb_define_module_function(rb_mMosquitto, "version", rb_mosquitto_version, 0);
+    rb_define_module_function(rb_mMosquitto, "cleanup", rb_mosquitto_cleanup, 0);
 
     _init_rb_mosquitto_client();
     _init_rb_mosquitto_message();

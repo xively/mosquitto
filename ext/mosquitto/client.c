@@ -1,47 +1,118 @@
 #include "mosquitto_ext.h"
 
+void rb_mosquitto_funcall_protected0(VALUE *args)
+{
+    int argc = (int)args[1];
+    VALUE cb = args[0];
+    if (NIL_P(cb)) MosquittoError("invalid callback");
+    if (argc == 1) {
+        rb_funcall(cb, intern_call, 1, args[2]);
+    } else if (argc == 2) {
+        rb_funcall(cb, intern_call, 2, args[2], args[3]);
+    } else if (argc == 3) {
+        rb_funcall(cb, intern_call, 3, args[2], args[3], args[4]);
+    } else if (argc == 4) {
+        rb_funcall(cb, intern_call, 4, args[2], args[3], args[4], args[5]);
+    }
+}
+
+void rb_mosquitto_funcall_protected(void *args)
+{
+    int error_tag;
+    rb_protect((VALUE(*)(VALUE))rb_mosquitto_funcall_protected0, (VALUE)args, &error_tag);
+    if (error_tag) {
+		printf("!!!!!!!!!!\n");
+        rb_jump_tag(error_tag);
+    }
+}
+
 void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
+    VALUE args[3];
     MosquittoGetClient((VALUE)obj);
-    rb_funcall(client->connect_cb, intern_call, 1, NUM2INT(rc));
+	printf("-> connect\n");
+    args[0] = client->connect_cb;
+    args[1] = (VALUE)1;
+    args[2] = INT2NUM(rc);
+    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
+	printf("<- connect\n");
 }
 
 void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
+    VALUE args[3];
     MosquittoGetClient((VALUE)obj);
-   rb_funcall(client->disconnect_cb, intern_call, 1, NUM2INT(rc));
+	printf("-> disconnect\n");
+    args[0] = client->disconnect_cb;
+    args[1] = (VALUE)1;
+    args[2] = INT2NUM(rc);
+    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
+	printf("<- disconnect\n");
 }
 
 void rb_mosquitto_client_on_publish_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
+    VALUE args[3];
     MosquittoGetClient((VALUE)obj);
-    rb_funcall(client->publish_cb, intern_call, 1, INT2NUM(mid));
+	printf("-> publish\n");
+    args[0] = client->publish_cb;
+    args[1] = (VALUE)1;
+    args[2] = INT2NUM(mid);
+    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
+	printf("<- publish\n");
 }
 
 void rb_mosquitto_client_on_message_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
+    VALUE args[3];
     VALUE message;
     MosquittoGetClient((VALUE)obj);
+	printf("-> message\n");
     message = rb_mosquitto_message_alloc(msg);
-    rb_funcall(client->message_cb, intern_call, 1, message);
+    args[0] = client->message_cb;
+    args[1] = (VALUE)1;
+    args[2] = message;
+    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
+	printf("<- message\n");
 }
 
 void rb_mosquitto_client_on_subscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
+    VALUE args[5];
     MosquittoGetClient((VALUE)obj);
-    rb_funcall(client->subscribe_cb, intern_call, 3, INT2NUM(mid), INT2NUM(qos_count), INT2NUM(*granted_qos));
+	printf("-> subscribe\n");
+    args[0] = client->subscribe_cb;
+    args[1] = (VALUE)3;
+    args[2] = INT2NUM(mid);
+    args[3] = INT2NUM(qos_count);
+    args[4] = INT2NUM(*granted_qos);
+    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
+	printf("<- subscribe\n");
 }
 
 void rb_mosquitto_client_on_unsubscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
+    VALUE args[3];
     MosquittoGetClient((VALUE)obj);
-    rb_funcall(client->message_cb, intern_call, 1, INT2NUM(mid));
+	printf("-> unsubscribe\n");
+    args[0] = client->unsubscribe_cb;
+    args[1] = (VALUE)1;
+    args[2] = INT2NUM(mid);
+    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
+	printf("<- unsubscribe\n");
 }
 
 void rb_mosquitto_client_on_log_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int level, const char *str)
 {
+    VALUE args[4];
     MosquittoGetClient((VALUE)obj);
-    rb_funcall(client->log_cb, intern_call, 2, INT2NUM(level), rb_str_new2(str));
+	printf("-> log\n");
+    args[0] = client->log_cb;
+    args[1] = (VALUE)2;
+    args[2] = INT2NUM(level);
+    args[3] = rb_str_new2(str);
+    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
+	printf("<- log\n");
 }
 
 static void rb_mosquitto_mark_client(void *ptr)
@@ -63,7 +134,6 @@ static void rb_mosquitto_free_client(void *ptr)
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)ptr;
     if (client) {
         mosquitto_destroy(client->mosq);
-
         xfree(client);
     }
 }
@@ -133,7 +203,7 @@ VALUE rb_mosquitto_client_reinitialise(int argc, VALUE *argv, VALUE obj)
     args.client_id = cl_id;
     args.clean_session = clean_session;
     args.obj = (void *)obj;
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_reinitialise_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_reinitialise_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -220,7 +290,7 @@ VALUE rb_mosquitto_client_connect(VALUE obj, VALUE host, VALUE port, VALUE keepa
     args.host = StringValueCStr(host);
     args.port = NUM2INT(port);
     args.keepalive = NUM2INT(keepalive);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_connect_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_connect_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -251,7 +321,7 @@ VALUE rb_mosquitto_client_connect_async(VALUE obj, VALUE host, VALUE port, VALUE
     args.host = StringValueCStr(host);
     args.port = NUM2INT(port);
     args.keepalive = NUM2INT(keepalive);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_connect_async_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_connect_async_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -273,7 +343,7 @@ VALUE rb_mosquitto_client_reconnect(VALUE obj)
 {
     int ret;
     MosquittoGetClient(obj);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_reconnect_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_reconnect_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -295,7 +365,7 @@ VALUE rb_mosquitto_client_disconnect(VALUE obj)
 {
     int ret;
     MosquittoGetClient(obj);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_disconnect_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_disconnect_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -333,7 +403,7 @@ VALUE rb_mosquitto_client_publish(VALUE obj, VALUE mid, VALUE topic, VALUE paylo
     args.payload = (const char *)StringValueCStr(payload);
     args.qos = NUM2INT(qos);
     args.retain = (retain == Qtrue) ? true : false;
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_publish_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_publish_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -376,7 +446,7 @@ VALUE rb_mosquitto_client_subscribe(VALUE obj, VALUE mid, VALUE subscription, VA
     args.mid = NIL_P(mid) ? NULL : &msg_id;
     args.subscription = StringValueCStr(subscription);
     args.qos = NUM2INT(qos);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_subscribe_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_subscribe_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -411,7 +481,7 @@ VALUE rb_mosquitto_client_unsubscribe(VALUE obj, VALUE mid, VALUE subscription)
     args.mosq = client->mosq;
     args.mid = NIL_P(mid) ? NULL : &msg_id;
     args.subscription = StringValueCStr(subscription);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_unsubscribe_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_unsubscribe_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -449,7 +519,7 @@ VALUE rb_mosquitto_client_loop(VALUE obj, VALUE timeout, VALUE max_packets)
     args.mosq = client->mosq;
     args.timeout = NUM2INT(timeout);
     args.max_packets = NUM2INT(max_packets);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -490,7 +560,7 @@ VALUE rb_mosquitto_client_loop_forever(VALUE obj, VALUE timeout, VALUE max_packe
     args.mosq = client->mosq;
     args.timeout = NUM2INT(timeout);
     args.max_packets = NUM2INT(max_packets);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_forever_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_forever_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -512,7 +582,7 @@ VALUE rb_mosquitto_client_loop_start(VALUE obj)
 {
     int ret;
     MosquittoGetClient(obj);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_start_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_start_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -538,7 +608,7 @@ VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
     MosquittoGetClient(obj);
     args.mosq = client->mosq;
     args.force = ((force == Qtrue) ? true : false);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_stop_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_stop_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -565,7 +635,7 @@ VALUE rb_mosquitto_client_loop_read(VALUE obj, VALUE max_packets)
     Check_Type(max_packets, T_FIXNUM);
     args.mosq = client->mosq;
     args.max_packets = NUM2INT(max_packets);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_read_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_read_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -604,7 +674,7 @@ VALUE rb_mosquitto_client_loop_write(VALUE obj, VALUE max_packets)
     Check_Type(max_packets, T_FIXNUM);
     args.mosq = client->mosq;
     args.max_packets = NUM2INT(max_packets);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_write_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_write_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -638,7 +708,7 @@ VALUE rb_mosquitto_client_loop_misc(VALUE obj)
 {
     int ret;
     MosquittoGetClient(obj);
-    ret = (int)rb_thread_blocking_region(rb_mosquitto_client_loop_misc_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_misc_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -675,7 +745,7 @@ VALUE rb_mosquitto_client_on_disconnect(int argc, VALUE *argv, VALUE obj)
     VALUE proc, cb;
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
-    MosquittoAssertCallback(cb, 0);
+    MosquittoAssertCallback(cb, 1);
     client->disconnect_cb = cb;
     mosquitto_disconnect_callback_set(client->mosq, rb_mosquitto_client_on_disconnect_cb);
     return Qtrue;

@@ -23,8 +23,8 @@ typedef struct {
     } else { \
         if (rb_class_of(cb) != rb_cProc) \
             rb_raise(rb_eTypeError, "Expected a Proc callback"); \
-        if (rb_funcall(cb, intern_arity, 0) != INT2NUM(arity)) \
-          rb_raise(rb_eArgError, "Callback expects %d argument(s), got %d", arity, NUM2INT(rb_funcall(cb, intern_arity, 0))); \
+        if (rb_proc_arity(cb) != arity) \
+          rb_raise(rb_eArgError, "Callback expects %d argument(s), got %d", arity, NUM2INT(rb_proc_arity(cb))); \
     }
 
 struct nogvl_connect_args {

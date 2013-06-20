@@ -10,3 +10,5 @@ rescue LoadError
 end
 
 require 'mosquitto/version' unless defined? Mosquitto::VERSION
+
+at_exit { Mosquitto.cleanup }

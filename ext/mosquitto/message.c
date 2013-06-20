@@ -51,6 +51,24 @@ VALUE rb_mosquitto_message_length(VALUE obj)
     return INT2NUM(msg->payloadlen);
 }
 
+VALUE rb_mosquitto_message_copy(VALUE obj)
+{
+    struct mosquitto_message *msg = NULL;
+    int ret;
+    MosquittoGetMessage(obj);
+    ret = mosquitto_message_copy(msg, (const struct mosquitto_message *)message->msg);
+    switch (ret) {
+        case MOSQ_ERR_INVAL:
+            MosquittoError("invalid input params");
+            break;
+        case MOSQ_ERR_NOMEM:
+            rb_memerror();
+            break;
+        default:
+            return rb_mosquitto_message_alloc((const struct mosquitto_message *)msg);
+    }
+}
+
 VALUE rb_mosquitto_message_qos(VALUE obj)
 {
     struct mosquitto_message *msg;
@@ -75,6 +93,7 @@ void _init_rb_mosquitto_message()
     rb_define_method(rb_cMosquittoMessage, "topic", rb_mosquitto_message_topic, 0);
     rb_define_method(rb_cMosquittoMessage, "to_s", rb_mosquitto_message_to_s, 0);
     rb_define_method(rb_cMosquittoMessage, "length", rb_mosquitto_message_length, 0);
+    rb_define_method(rb_cMosquittoMessage, "copy", rb_mosquitto_message_copy, 0);
     rb_define_method(rb_cMosquittoMessage, "qos", rb_mosquitto_message_qos, 0);
     rb_define_method(rb_cMosquittoMessage, "retain?", rb_mosquitto_message_retain_p, 0);
 }
