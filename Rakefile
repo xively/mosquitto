@@ -10,12 +10,7 @@ require 'rake/extensiontask'
 require 'rake/testtask'
 require 'rdoc/task'
 
-gemspec = eval(IO.read('mosquitto.gemspec'))
-
-Gem::PackageTask.new(gemspec) do |pkg|
-end
-
-Rake::ExtensionTask.new('mosquitto', gemspec) do |ext|
+Rake::ExtensionTask.new('mosquitto') do |ext|
   ext.name = 'mosquitto_ext'
   ext.ext_dir = 'ext/mosquitto'
   CLEAN.include 'lib/**/mosquitto_ext.*'
