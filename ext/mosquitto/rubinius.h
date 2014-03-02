@@ -1,8 +1,6 @@
 #ifndef MOSQUITTO_RUBINIUS_H
 #define MOSQUITTO_RUBINIUS_H
 
-#define RSTRING_NOT_MODIFIED
-
-#include <ruby/st.h>
+#error Unsupported Ruby platform - this extension only works with Ruby 1.9 and Ruby 2
 
 #endif
