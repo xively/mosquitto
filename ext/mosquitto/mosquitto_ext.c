@@ -30,9 +30,23 @@ void Init_mosquitto_ext()
 
     rb_mMosquitto = rb_define_module("Mosquitto");
 
+    /* Message constants */
+
     rb_define_const(rb_mMosquitto, "AT_MOST_ONCE", INT2NUM(0));
     rb_define_const(rb_mMosquitto, "AT_LEAST_ONCE", INT2NUM(1));
     rb_define_const(rb_mMosquitto, "EXACTLY_ONCE", INT2NUM(2));
+
+    /* Log constants */
+
+    rb_define_const(rb_mMosquitto, "LOG_NONE", INT2NUM(0x00));
+    rb_define_const(rb_mMosquitto, "LOG_INFO", INT2NUM(0x01));
+    rb_define_const(rb_mMosquitto, "LOG_NOTICE", INT2NUM(0x02));
+    rb_define_const(rb_mMosquitto, "LOG_WARNING", INT2NUM(0x04));
+    rb_define_const(rb_mMosquitto, "LOG_ERR", INT2NUM(0x08));
+    rb_define_const(rb_mMosquitto, "LOG_DEBUG", INT2NUM(0x10));
+    rb_define_const(rb_mMosquitto, "LOG_SUBSCRIBE", INT2NUM(0x20));
+    rb_define_const(rb_mMosquitto, "LOG_UNSUBSCRIBE", INT2NUM(0x40));
+    rb_define_const(rb_mMosquitto, "LOG_ALL", INT2NUM(0xFFFF));
 
     rb_eMosquittoError = rb_define_class_under(rb_mMosquitto, "Error", rb_eStandardError);
 
