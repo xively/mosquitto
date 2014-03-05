@@ -40,6 +40,8 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     assert client.connect_async("localhost", 1883, 10)
+    sleep 1
+    assert client.socket != -1
   end
 
   def test_reconnect
@@ -67,8 +69,11 @@ class TestClient < MosquittoTestCase
   def test_socket
     client = Mosquitto::Client.new
     assert_equal(-1, client.socket)
+    assert client.socket == -1
     assert client.connect("localhost", 1883, 10)
     assert_instance_of Fixnum, client.socket
+    sleep 1
+    assert client.socket != -1
   end
 
   def test_loop
@@ -149,5 +154,27 @@ class TestClient < MosquittoTestCase
     assert msg_id != 0
   ensure
     client.loop_stop(true)
+  end
+
+  def test_message_callback
+    message = nil
+    publisher = Mosquitto::Client.new
+    publisher.loop_start
+    publisher.on_connect do |rc|
+      publisher.publish(nil, "topic", "test", Mosquitto::AT_MOST_ONCE, true)
+    end
+    publisher.connect("localhost", 1883, 10)
+
+    subscriber = Mosquitto::Client.new
+    subscriber.loop_start
+    subscriber.on_connect do |rc|
+      subscriber.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
+    end
+    subscriber.connect("localhost", 1883, 10)
+    subscriber.on_message do |msg|
+      message = msg
+    end
+    sleep 1.5
+    assert_equal "test", message.to_s
   end
 end
