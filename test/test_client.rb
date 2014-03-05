@@ -32,11 +32,13 @@ class TestClient < MosquittoTestCase
 
   def test_connect
     client = Mosquitto::Client.new
+    assert client.loop_start
     assert client.connect("localhost", 1883, 10)
   end
 
   def test_connect_async
     client = Mosquitto::Client.new
+    assert client.loop_start
     assert client.connect_async("localhost", 1883, 10)
   end
 
@@ -89,18 +91,18 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     client.on_connect do |rc|
-      p :connected
       connected = true
     end
     client.on_disconnect do |rc|
-      p :disconnected
       disconnected = true
     end
     client.on_log do |level, msg|
-      p msg
+      p "log [#{level}]: #{msg}"
     end
     assert client.connect("localhost", 1883, 10)
+    sleep 1.5
     assert client.disconnect
+    sleep 1.5
     assert connected
     assert disconnected
   ensure
@@ -122,22 +124,27 @@ class TestClient < MosquittoTestCase
 
   def test_subscribe_unsubscribe_callback
     msg_id = 0
+    subscribed = false
+    unsubscribed = false
     client = Mosquitto::Client.new
     assert client.loop_start
     client.on_subscribe do |mid,qos_count,granted_qos|
-      p :subscribed
+      subscribed = true
       msg_id = mid
-      p msg_id
     end
     client.on_unsubscribe do |mid|
-      p :unsubscribed
+      unsubscribed = true
     end
     client.on_log do |level, msg|
-      p msg
+      p "log [#{level}]: #{msg}"
     end
     assert client.connect("localhost", 1883, 10)
+    sleep 1.5
     assert client.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
     assert client.unsubscribe(nil, "topic")
+    sleep 1.5
+    assert subscribed
+    assert unsubscribed
     assert client.disconnect
     assert msg_id != 0
   ensure

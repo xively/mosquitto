@@ -1,5 +1,9 @@
 #include "mosquitto_ext.h"
 
+pthread_mutex_t rb_mosquitto_g_callback_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t rb_mosquitto_g_callback_cond   = PTHREAD_COND_INITIALIZER;
+rb_mosquitto_callback_t *rb_mosquitto_g_callback_queue     = NULL;
+
 void rb_mosquitto_funcall_protected0(VALUE *args)
 {
     int argc = (int)args[1];
@@ -20,46 +24,134 @@ void rb_mosquitto_funcall_protected(void *args)
 {
     int error_tag;
     rb_protect((VALUE(*)(VALUE))rb_mosquitto_funcall_protected0, (VALUE)args, &error_tag);
-    if (error_tag) {
-		printf("!!!!!!!!!!\n");
-        rb_jump_tag(error_tag);
+    if (error_tag) rb_jump_tag(error_tag);
+}
+
+void rb_mosquitto_g_callback_queue_push(rb_mosquitto_callback_t *callback)
+{
+    callback->next   = rb_mosquitto_g_callback_queue;
+    rb_mosquitto_g_callback_queue = callback;
+}
+
+static rb_mosquitto_callback_t *rb_mosquitto_g_callback_queue_pop(void)
+{
+    rb_mosquitto_callback_t *callback = rb_mosquitto_g_callback_queue;
+    if (callback)
+    {
+      rb_mosquitto_g_callback_queue = callback->next;
     }
+    return callback;
+}
+
+void rb_mosquitto_callback(void *data)
+{
+    rb_mosquitto_callback_t callback;
+    pthread_mutex_init(&callback.mutex, NULL);
+    pthread_cond_init(&callback.cond, NULL);
+    callback.data = data;
+    callback.handled = false;
+
+    pthread_mutex_lock(&rb_mosquitto_g_callback_mutex);
+    rb_mosquitto_g_callback_queue_push(&callback);
+    pthread_mutex_unlock(&rb_mosquitto_g_callback_mutex);
+
+    pthread_cond_signal(&rb_mosquitto_g_callback_cond);
+
+    pthread_mutex_lock(&callback.mutex);
+    while (callback.handled == false)
+    {
+        pthread_cond_wait(&callback.cond, &callback.mutex);
+    }
+    pthread_mutex_unlock(&callback.mutex);
+
+    pthread_mutex_destroy(&callback.mutex);
+    pthread_cond_destroy(&callback.cond);
+}
+
+static VALUE rb_mosquitto_handle_callback(void *cb)
+{
+    rb_mosquitto_callback_t *callback = (rb_mosquitto_callback_t*) cb;
+    rb_mosquitto_funcall_protected((void *)callback->data);
+    pthread_mutex_lock(&callback->mutex);
+    callback->handled = true;
+    pthread_cond_signal(&callback->cond);
+    pthread_mutex_unlock(&callback->mutex);
+
+    return Qnil;
+}
+
+static VALUE rb_mosquitto_wait_for_callback_signal(void *w)
+{
+    rb_mosquitto_callback_waiting_t *waiting = (rb_mosquitto_callback_waiting_t*) w;
+    pthread_mutex_lock(&rb_mosquitto_g_callback_mutex);
+
+    while (waiting->abort == false && (waiting->callback = rb_mosquitto_g_callback_queue_pop()) == NULL)
+    {
+        pthread_cond_wait(&rb_mosquitto_g_callback_cond, &rb_mosquitto_g_callback_mutex);
+    }
+
+    pthread_mutex_unlock(&rb_mosquitto_g_callback_mutex);
+
+    return Qnil;
+}
+
+static void rb_mosquitto_stop_waiting_for_callback_signal(void *w)
+{
+    rb_mosquitto_callback_waiting_t *waiting = (rb_mosquitto_callback_waiting_t*) w;
+
+    pthread_mutex_lock(&rb_mosquitto_g_callback_mutex);
+    waiting->abort = true;
+    pthread_cond_signal(&rb_mosquitto_g_callback_cond);
+    pthread_mutex_unlock(&rb_mosquitto_g_callback_mutex);
+}
+
+static VALUE rb_mosquitto_event_thread(void *unused)
+{
+    rb_mosquitto_callback_waiting_t waiting = {
+      .callback = NULL,
+      .abort    = false
+    };
+
+    while (waiting.abort == false)
+    {
+      rb_thread_blocking_region(rb_mosquitto_wait_for_callback_signal, &waiting, rb_mosquitto_stop_waiting_for_callback_signal, &waiting);
+      if (waiting.callback)
+      {
+          rb_thread_create(rb_mosquitto_handle_callback, (void *) waiting.callback);
+      }
+    }
+
+  return Qnil;
 }
 
 void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
     VALUE args[3];
     MosquittoGetClient((VALUE)obj);
-	printf("-> connect\n");
     args[0] = client->connect_cb;
     args[1] = (VALUE)1;
     args[2] = INT2NUM(rc);
-    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
-	printf("<- connect\n");
+    rb_mosquitto_callback((void*)args);
 }
 
 void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
     VALUE args[3];
     MosquittoGetClient((VALUE)obj);
-	printf("-> disconnect\n");
     args[0] = client->disconnect_cb;
     args[1] = (VALUE)1;
     args[2] = INT2NUM(rc);
-    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
-	printf("<- disconnect\n");
+    rb_mosquitto_callback((void*)args);
 }
 
 void rb_mosquitto_client_on_publish_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
     VALUE args[3];
     MosquittoGetClient((VALUE)obj);
-	printf("-> publish\n");
     args[0] = client->publish_cb;
     args[1] = (VALUE)1;
     args[2] = INT2NUM(mid);
-    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
-	printf("<- publish\n");
+    rb_mosquitto_callback((void*)args);
 }
 
 void rb_mosquitto_client_on_message_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
@@ -67,52 +159,44 @@ void rb_mosquitto_client_on_message_cb(MOSQ_UNUSED struct mosquitto *mosq, void 
     VALUE args[3];
     VALUE message;
     MosquittoGetClient((VALUE)obj);
-	printf("-> message\n");
     message = rb_mosquitto_message_alloc(msg);
     args[0] = client->message_cb;
     args[1] = (VALUE)1;
     args[2] = message;
-    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
-	printf("<- message\n");
+    rb_mosquitto_callback((void*)args);    
 }
 
 void rb_mosquitto_client_on_subscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
     VALUE args[5];
     MosquittoGetClient((VALUE)obj);
-	printf("-> subscribe\n");
     args[0] = client->subscribe_cb;
     args[1] = (VALUE)3;
     args[2] = INT2NUM(mid);
     args[3] = INT2NUM(qos_count);
     args[4] = INT2NUM(*granted_qos);
-    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
-	printf("<- subscribe\n");
+    rb_mosquitto_callback((void*)args);    
 }
 
 void rb_mosquitto_client_on_unsubscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
     VALUE args[3];
     MosquittoGetClient((VALUE)obj);
-	printf("-> unsubscribe\n");
     args[0] = client->unsubscribe_cb;
     args[1] = (VALUE)1;
     args[2] = INT2NUM(mid);
-    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
-	printf("<- unsubscribe\n");
+    rb_mosquitto_callback((void*)args);    
 }
 
 void rb_mosquitto_client_on_log_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int level, const char *str)
 {
     VALUE args[4];
     MosquittoGetClient((VALUE)obj);
-	printf("-> log\n");
     args[0] = client->log_cb;
     args[1] = (VALUE)2;
     args[2] = INT2NUM(level);
     args[3] = rb_str_new2(str);
-    rb_thread_call_with_gvl(rb_mosquitto_funcall_protected, (void *)&args);
-	printf("<- log\n");
+    rb_mosquitto_callback((void*)args);    
 }
 
 static void rb_mosquitto_mark_client(void *ptr)
@@ -567,8 +651,20 @@ VALUE rb_mosquitto_client_loop_forever(VALUE obj, VALUE timeout, VALUE max_packe
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
            break;
-       case MOSQ_ERR_NOT_SUPPORTED :
-           MosquittoError("thread support is not available");
+       case MOSQ_ERR_NOMEM:
+           rb_memerror();
+           break;
+       case MOSQ_ERR_NO_CONN:
+           MosquittoError("client not connected to broker");
+           break;
+       case MOSQ_ERR_CONN_LOST:
+           MosquittoError("connection to the broker was lost");
+           break;
+       case MOSQ_ERR_PROTOCOL:
+           MosquittoError("protocol error communicating with the broker");
+           break;
+       case MOSQ_ERR_ERRNO:
+           rb_sys_fail("mosquitto_loop");
            break;
        default:
            return Qtrue;
@@ -715,8 +811,8 @@ VALUE rb_mosquitto_client_loop_misc(VALUE obj)
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
            break;
-       case MOSQ_ERR_NOT_SUPPORTED :
-           MosquittoError("thread support is not available");
+       case MOSQ_ERR_NO_CONN:
+           MosquittoError("client not connected to broker");
            break;
        default:
            return Qtrue;
@@ -737,8 +833,8 @@ VALUE rb_mosquitto_client_on_connect(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
-    client->connect_cb = cb;
     mosquitto_connect_callback_set(client->mosq, rb_mosquitto_client_on_connect_cb);
+    client->connect_cb = cb;
     return Qtrue;
 }
 
@@ -748,8 +844,8 @@ VALUE rb_mosquitto_client_on_disconnect(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
-    client->disconnect_cb = cb;
     mosquitto_disconnect_callback_set(client->mosq, rb_mosquitto_client_on_disconnect_cb);
+    client->disconnect_cb = cb;
     return Qtrue;
 }
 
@@ -759,8 +855,8 @@ VALUE rb_mosquitto_client_on_publish(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
-    client->publish_cb = cb;
     mosquitto_publish_callback_set(client->mosq, rb_mosquitto_client_on_publish_cb);
+    client->publish_cb = cb;
     return Qtrue;
 }
 
@@ -770,8 +866,8 @@ VALUE rb_mosquitto_client_on_message(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
-    client->message_cb = cb;
     mosquitto_message_callback_set(client->mosq, rb_mosquitto_client_on_message_cb);
+    client->message_cb = cb;
     return Qtrue;
 }
 
@@ -781,8 +877,8 @@ VALUE rb_mosquitto_client_on_subscribe(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 3);
-    client->subscribe_cb = cb;
     mosquitto_subscribe_callback_set(client->mosq, rb_mosquitto_client_on_subscribe_cb);
+    client->subscribe_cb = cb;
     return Qtrue;
 }
 
@@ -792,8 +888,8 @@ VALUE rb_mosquitto_client_on_unsubscribe(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
-    client->unsubscribe_cb = cb;
     mosquitto_unsubscribe_callback_set(client->mosq, rb_mosquitto_client_on_unsubscribe_cb);
+    client->unsubscribe_cb = cb;
     return Qtrue;
 }
 
@@ -803,8 +899,8 @@ VALUE rb_mosquitto_client_on_log(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 2);
-    client->log_cb = cb;
     mosquitto_log_callback_set(client->mosq, rb_mosquitto_client_on_log_cb);
+    client->log_cb = cb;
     return Qtrue;
 }
 
@@ -847,4 +943,5 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "on_subscribe", rb_mosquitto_client_on_subscribe, -1);
     rb_define_method(rb_cMosquittoClient, "on_unsubscribe", rb_mosquitto_client_on_unsubscribe, -1);
     rb_define_method(rb_cMosquittoClient, "on_log", rb_mosquitto_client_on_log, -1);
+    rb_thread_create(rb_mosquitto_event_thread, NULL);
 }

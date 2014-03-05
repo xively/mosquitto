@@ -1,6 +1,21 @@
 #ifndef MOSQUITTO_CLIENT_H
 #define MOSQUITTO_CLIENT_H
 
+typedef struct rb_mosquitto_callback_t rb_mosquitto_callback_t;
+struct rb_mosquitto_callback_t {
+  void *data;
+  pthread_mutex_t mutex;
+  pthread_cond_t  cond;
+  bool handled;
+  rb_mosquitto_callback_t *next;
+};
+
+typedef struct rb_mosquitto_callback_waiting_t rb_mosquitto_callback_waiting_t;
+struct rb_mosquitto_callback_waiting_t {
+  rb_mosquitto_callback_t *callback;
+  bool abort;
+};
+
 typedef struct {
     struct mosquitto *mosq;
     VALUE connect_cb;

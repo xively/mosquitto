@@ -2,6 +2,7 @@
 #define MOSQUITTO_EXT_H
 
 #include <mosquitto.h>
+#include <pthread.h>
 #include "ruby.h"
 
 #if defined(__GNUC__) && (__GNUC__ >= 3)
