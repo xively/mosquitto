@@ -28,6 +28,7 @@ class TestClient < MosquittoTestCase
   def test_auth
     client = Mosquitto::Client.new
     assert client.auth("username", "password")
+    assert client.auth("username", nil)
   end
 
   def test_connect

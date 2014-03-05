@@ -340,10 +340,16 @@ VALUE rb_mosquitto_client_will_clear(VALUE obj)
 VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
 {
     int ret;
+    const char* passw;
     MosquittoGetClient(obj);
     Check_Type(username, T_STRING);
-    Check_Type(password, T_STRING);
-    ret = mosquitto_username_pw_set(client->mosq, StringValueCStr(username), StringValueCStr(password));
+    if(!NIL_P(password)) {
+        Check_Type(password, T_STRING);
+        passw = StringValueCStr(password);
+    } else {
+        passw = NULL;
+    }
+    ret = mosquitto_username_pw_set(client->mosq, StringValueCStr(username), passw);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
