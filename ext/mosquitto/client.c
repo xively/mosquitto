@@ -128,10 +128,22 @@ void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq, void 
 {
     VALUE args[3];
     MosquittoGetClient((VALUE)obj);
-    args[0] = client->connect_cb;
-    args[1] = (VALUE)1;
-    args[2] = INT2NUM(rc);
-    rb_mosquitto_callback((void*)args);
+    switch (rc) {
+       case 1:
+           MosquittoError("connection refused (unacceptable protocol version)");
+           break;
+       case 2:
+           MosquittoError("connection refused (identifier rejected)");
+           break;
+       case 3:
+           MosquittoError("connection refused (broker unavailable)");
+           break;
+       default:
+           args[0] = client->connect_cb;
+           args[1] = (VALUE)1;
+           args[2] = INT2NUM(rc);
+           rb_mosquitto_callback((void*)args);
+    }
 }
 
 void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
