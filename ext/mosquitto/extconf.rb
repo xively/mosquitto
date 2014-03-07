@@ -21,6 +21,7 @@ end
 have_func('rb_thread_call_without_gvl')
 (have_header("mosquitto.h") && have_library('mosquitto')) or abort("libmosquitto missing!")
 have_header("pthread.h") or abort('pthread support required!')
+have_macro("LIBMOSQUITTO_VERSION_NUMBER", "mosquitto.h")
 
 $defs << "-pedantic"
 $CFLAGS << ' -Wall -funroll-loops'
