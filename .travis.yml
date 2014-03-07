@@ -3,6 +3,7 @@ before_install:
   - sudo apt-get update
 install:
   - sudo apt-get install mosquitto
+  - sudo apt-get install ibmosquitto-dev
   - bundle install
 bundler_args: --quiet
 rvm:
