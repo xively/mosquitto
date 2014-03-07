@@ -1,10 +1,13 @@
 language: ruby
 before_install:
-  - sudo apt-add-repository -y ppa:mosquitto-dev/mosquitto-ppa
-  - sudo apt-get update
+  - sudo apt-get update -qq
+  - sudo apt-get instal pkg-config cmake openssl
+  - wget http://mosquitto.org/files/source/mosquitto-1.2.3.tar.gz
 install:
-  - sudo apt-get install mosquitto
-  - sudo apt-get install libmosquitto0-dev
+  - tar xzf mosquitto-1.2.3.tar.gz
+  - cd mosquitto-1.2.3
+  - cmake .
+  - sudo make install
   - bundle install
 bundler_args: --quiet
 rvm:
