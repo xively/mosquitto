@@ -10,6 +10,7 @@ $LDFLAGS << " -L/usr/local/Cellar/mosquitto/1.2.3/lib"
 
 have_func('rb_thread_call_without_gvl')
 have_header("mosquitto.h")
+have_header("pthread.h")
 have_library('mosquitto')
 
 $defs << "-pedantic"
