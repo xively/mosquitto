@@ -19,9 +19,8 @@ if !have_library 'mosquitto'
 end
 
 have_func('rb_thread_call_without_gvl')
-have_header("mosquitto.h")
-have_header("pthread.h")
-have_library('mosquitto')
+(have_header("mosquitto.h") && have_library('mosquitto')) or abort("libmosquitto missing!")
+have_header("pthread.h") or abort('pthread support required!')
 
 $defs << "-pedantic"
 $CFLAGS << ' -Wall -funroll-loops'
