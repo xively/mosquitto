@@ -1,0 +1,13 @@
+language: ruby
+bundler_args: --quiet
+rvm:
+  - 1.9.3
+script: "bundle exec rake"
+gemfile:
+  - Gemfile
+notifications:
+  recipients:
+    - lourens@methodmissing.com
+branches:
+  only:
+    - master
