@@ -9,6 +9,8 @@ void rb_mosquitto_funcall_protected0(VALUE *args)
     int argc = (int)args[1];
     VALUE cb = args[0];
     if (NIL_P(cb)) MosquittoError("invalid callback");
+    // Special case for handling error status codes in the on_connect callback for the user
+    if (CLASS_OF(cb) == rb_eException) rb_exc_raise(cb);
     if (argc == 1) {
         rb_funcall(cb, intern_call, 1, args[2]);
     } else if (argc == 2) {
@@ -128,22 +130,21 @@ void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq, void 
 {
     VALUE args[3];
     MosquittoGetClient((VALUE)obj);
+    args[0] = client->connect_cb;
+    args[1] = (VALUE)1;
+    args[2] = INT2NUM(rc);
     switch (rc) {
        case 1:
-           MosquittoError("connection refused (unacceptable protocol version)");
+           args[0] = rb_exc_new2(rb_eMosquittoError, "connection refused (unacceptable protocol version)");
            break;
        case 2:
-           MosquittoError("connection refused (identifier rejected)");
+           args[0] = rb_exc_new2(rb_eMosquittoError, "connection refused (identifier rejected)");
            break;
        case 3:
-           MosquittoError("connection refused (broker unavailable)");
+           args[0] = rb_exc_new2(rb_eMosquittoError, "connection refused (broker unavailable)");
            break;
-       default:
-           args[0] = client->connect_cb;
-           args[1] = (VALUE)1;
-           args[2] = INT2NUM(rc);
-           rb_mosquitto_callback((void*)args);
     }
+    rb_mosquitto_callback((void*)args);
 }
 
 void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)

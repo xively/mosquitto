@@ -7,16 +7,28 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert_instance_of Mosquitto::Client, client
     client = Mosquitto::Client.new("test")
+    assert_raises TypeError do
+      Mosquitto::Client.new(:invalid)
+    end
   end
 
   def test_reinitialize
     client = Mosquitto::Client.new
     assert client.reinitialise("test")
+    assert_raises TypeError do
+      client.reinitialise(:invalid)
+    end
   end
 
   def test_will_set
     client = Mosquitto::Client.new
     assert client.will_set("topic", "test", Mosquitto::AT_MOST_ONCE, true)
+    assert_raises TypeError do
+      client.will_set("topic", :invalid, Mosquitto::AT_MOST_ONCE, true)
+    end
+    assert_raises Mosquitto::Error do
+      client.will_set("topic", ('a' * 268435456), Mosquitto::AT_MOST_ONCE, true)
+    end
   end
 
   def test_will_clear
@@ -29,26 +41,45 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.auth("username", "password")
     assert client.auth("username", nil)
+    assert_raises TypeError do
+      client.auth(:invalid, "password")
+    end
   end
 
   def test_connect
     client = Mosquitto::Client.new
     assert client.loop_start
+    assert_raises TypeError do
+      client.connect(:invalid, 1883, 10)
+    end
     assert client.connect("localhost", 1883, 10)
   end
 
   def test_connect_async
     client = Mosquitto::Client.new
     assert client.loop_start
+    assert_raises TypeError do
+      client.connect_async(:invalid, 1883, 10)
+    end
     assert client.connect_async("localhost", 1883, 10)
     sleep 1
     assert client.socket != -1
   end
 
+  def test_disconnect
+    client = Mosquitto::Client.new
+    assert client.loop_start
+    assert_raises Mosquitto::Error do
+      client.disconnect
+    end
+    assert client.connect("localhost", 1883, 10)
+    assert client.disconnect
+  end
+
   def test_reconnect
     client = Mosquitto::Client.new
     assert_raises Mosquitto::Error do
-      assert client.reconnect
+      client.reconnect
     end
     assert client.connect("localhost", 1883, 10)
     assert client.reconnect
@@ -56,8 +87,38 @@ class TestClient < MosquittoTestCase
 
   def test_publish
     client = Mosquitto::Client.new
+    assert_raises Mosquitto::Error do
+      client.publish(nil, "topic", "test", Mosquitto::AT_MOST_ONCE, true)
+    end
     assert client.connect("localhost", 1883, 10)
+    assert_raises TypeError do
+      client.publish(nil, :invalid, "test", Mosquitto::AT_MOST_ONCE, true)
+    end
     assert client.publish(nil, "topic", "test", Mosquitto::AT_MOST_ONCE, true)
+  end
+
+  def test_subscribe
+    client = Mosquitto::Client.new
+    assert_raises Mosquitto::Error do
+      client.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
+    end
+    assert client.connect("localhost", 1883, 10)
+    assert_raises TypeError do
+      client.subscribe(nil, :topic, Mosquitto::AT_MOST_ONCE)
+    end
+    assert client.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
+  end
+
+  def test_unsubscribe
+    client = Mosquitto::Client.new
+    assert_raises Mosquitto::Error do
+      client.unsubscribe(nil, "topic")
+    end
+    assert client.connect("localhost", 1883, 10)
+    assert_raises TypeError do
+      client.unsubscribe(nil, :topic)
+    end
+    assert client.unsubscribe(nil, "topic")
   end
 
   def test_subscribe_unsubscribe
@@ -79,11 +140,35 @@ class TestClient < MosquittoTestCase
 
   def test_loop
     client = Mosquitto::Client.new
+    assert_raises Mosquitto::Error do
+      client.loop(10,10)
+    end
     assert client.connect("localhost", 1883, 10)
     assert client.publish(nil, "topic", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.loop(10,10)
   end
-
+=begin
+  def test_loop_forever
+    connected = false
+    Thread.new do
+      client = Mosquitto::Client.new
+      client.on_connect do |rc|
+        connected = true
+        Thread.current.kill
+      end
+      assert_raises TypeError do
+        client.loop_forever(:invalid,1)
+      end
+      assert_raises Mosquitto::Error do
+        client.loop_forever(10,10)
+      end
+      assert client.connect("localhost", 1883, 10)
+      assert client.loop_forever(-1,1)
+    end.join(1)
+    sleep 1
+    assert connected
+  end
+=end
   def test_loop_stop_start
     client = Mosquitto::Client.new
     assert client.connect("localhost", 1883, 10)
