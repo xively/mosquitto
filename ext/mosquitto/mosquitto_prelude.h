@@ -6,6 +6,7 @@
 #endif
 
 #if LIBMOSQUITTO_VERSION_NUMBER != 1002003
+#warning LIBMOSQUITTO_VERSION_NUMBER
 #error libmosquitto version 1.2.3 required
 #endif
 
