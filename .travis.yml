@@ -1,6 +1,6 @@
 language: ruby
 before_install:
-  - sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa
+  - sudo apt-add-repository -y ppa:mosquitto-dev/mosquitto-ppa
   - sudo apt-get update
 install:
   - sudo apt-get install mosquitto
