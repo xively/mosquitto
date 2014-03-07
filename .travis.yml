@@ -1,4 +1,6 @@
 language: ruby
+install:
+  - apt-get install mosquitto
 bundler_args: --quiet
 rvm:
   - 1.9.3
