@@ -8,14 +8,14 @@ class TestThreads < MosquittoTestCase
     threads << Thread.new do
       publisher = Mosquitto::Client.new
       publisher.loop_start
-      assert publisher.connect("localhost", 1883, 10)
+      assert publisher.connect(TEST_HOST, 1883, 10)
       sleep 1
     end
 
     threads << Thread.new do
       subscriber = Mosquitto::Client.new
       subscriber.loop_start
-      assert subscriber.connect("localhost", 1883, 10)
+      assert subscriber.connect(TEST_HOST, 1883, 10)
       sleep 1
     end
     threads.each(&:join)
@@ -29,10 +29,7 @@ class TestThreads < MosquittoTestCase
     threads << Thread.new do
       publisher = Mosquitto::Client.new
       publisher.loop_start
-      assert publisher.connect("localhost", 1883, 10)
-      publisher.on_log do |level,msg|
-        p "PUB: #{msg}"
-      end
+      assert publisher.connect(TEST_HOST, 1883, 10)
       publisher.on_connect do |rc|
         pub_queue.each do |message|
           publisher.publish(nil, "topic", message, Mosquitto::AT_MOST_ONCE, true)
@@ -48,18 +45,16 @@ class TestThreads < MosquittoTestCase
     threads << Thread.new do
       subscriber = Mosquitto::Client.new
       subscriber.loop_start
-      assert subscriber.connect("localhost", 1883, 10)
-      subscriber.on_log do |level,msg|
-        p "SUB: #{msg}"
-      end
+      assert subscriber.connect(TEST_HOST, 1883, 10)
       subscriber.on_connect do |rc|
         subscriber.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
       end
       subscriber.on_message do |msg|
-        messages << msg
+        messages << msg.to_s
       end
       sleep 2
     end
+
     threads.each(&:join)
     assert_equal messages, ('a'..'z').to_a
   end
