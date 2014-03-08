@@ -22,18 +22,18 @@ class TestClient < MosquittoTestCase
 
   def test_will_set
     client = Mosquitto::Client.new
-    assert client.will_set("topic", "test", Mosquitto::AT_MOST_ONCE, true)
+    assert client.will_set("will_set", "test", Mosquitto::AT_MOST_ONCE, true)
     assert_raises TypeError do
-      client.will_set("topic", :invalid, Mosquitto::AT_MOST_ONCE, true)
+      client.will_set("will_set", :invalid, Mosquitto::AT_MOST_ONCE, true)
     end
     assert_raises Mosquitto::Error do
-      client.will_set("topic", ('a' * 268435456), Mosquitto::AT_MOST_ONCE, true)
+      client.will_set("will_set", ('a' * 268435456), Mosquitto::AT_MOST_ONCE, true)
     end
   end
 
   def test_will_clear
     client = Mosquitto::Client.new
-    assert client.will_set("topic", "test", Mosquitto::AT_MOST_ONCE, true)
+    assert client.will_set("will_clear", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.will_clear
   end
 
@@ -88,44 +88,44 @@ class TestClient < MosquittoTestCase
   def test_publish
     client = Mosquitto::Client.new
     assert_raises Mosquitto::Error do
-      client.publish(nil, "topic", "test", Mosquitto::AT_MOST_ONCE, true)
+      client.publish(nil, "publish", "test", Mosquitto::AT_MOST_ONCE, true)
     end
     assert client.connect(TEST_HOST, 1883, 10)
     assert_raises TypeError do
       client.publish(nil, :invalid, "test", Mosquitto::AT_MOST_ONCE, true)
     end
-    assert client.publish(nil, "topic", "test", Mosquitto::AT_MOST_ONCE, true)
+    assert client.publish(nil, "publish", "test", Mosquitto::AT_MOST_ONCE, true)
   end
 
   def test_subscribe
     client = Mosquitto::Client.new
     assert_raises Mosquitto::Error do
-      client.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
+      client.subscribe(nil, "subscribe", Mosquitto::AT_MOST_ONCE)
     end
     assert client.connect(TEST_HOST, 1883, 10)
     assert_raises TypeError do
       client.subscribe(nil, :topic, Mosquitto::AT_MOST_ONCE)
     end
-    assert client.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
+    assert client.subscribe(nil, "subscribe", Mosquitto::AT_MOST_ONCE)
   end
 
   def test_unsubscribe
     client = Mosquitto::Client.new
     assert_raises Mosquitto::Error do
-      client.unsubscribe(nil, "topic")
+      client.unsubscribe(nil, "unsubscribe")
     end
     assert client.connect(TEST_HOST, 1883, 10)
     assert_raises TypeError do
       client.unsubscribe(nil, :topic)
     end
-    assert client.unsubscribe(nil, "topic")
+    assert client.unsubscribe(nil, "unsubscribe")
   end
 
   def test_subscribe_unsubscribe
     client = Mosquitto::Client.new
     assert client.connect(TEST_HOST, 1883, 10)
-    assert client.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
-    assert client.unsubscribe(nil, "topic")
+    assert client.subscribe(nil, "subscribe_unsubscribe", Mosquitto::AT_MOST_ONCE)
+    assert client.unsubscribe(nil, "subscribe_unsubscribe")
   end
 
   def test_socket
@@ -144,7 +144,7 @@ class TestClient < MosquittoTestCase
       client.loop(10,10)
     end
     assert client.connect(TEST_HOST, 1883, 10)
-    assert client.publish(nil, "topic", "test", Mosquitto::AT_MOST_ONCE, true)
+    assert client.publish(nil, "loop", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.loop(10,10)
   end
 =begin
@@ -172,7 +172,7 @@ class TestClient < MosquittoTestCase
   def test_loop_stop_start
     client = Mosquitto::Client.new
     assert client.connect(TEST_HOST, 1883, 10)
-    assert client.publish(nil, "topic", "test", Mosquitto::AT_MOST_ONCE, true)
+    assert client.publish(nil, "loop_stop_start", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.loop_start
     assert client.loop_stop(true)
   end
@@ -231,8 +231,8 @@ class TestClient < MosquittoTestCase
     end
     assert client.connect(TEST_HOST, 1883, 10)
     sleep 1.5
-    assert client.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
-    assert client.unsubscribe(nil, "topic")
+    assert client.subscribe(nil, "test_sub_unsub", Mosquitto::AT_MOST_ONCE)
+    assert client.unsubscribe(nil, "test_sub_unsub")
     sleep 1.5
     assert subscribed
     assert unsubscribed
@@ -247,14 +247,14 @@ class TestClient < MosquittoTestCase
     publisher = Mosquitto::Client.new
     publisher.loop_start
     publisher.on_connect do |rc|
-      publisher.publish(nil, "topic", "test", Mosquitto::AT_MOST_ONCE, true)
+      publisher.publish(nil, "message_callback", "test", Mosquitto::AT_MOST_ONCE, true)
     end
     publisher.connect(TEST_HOST, 1883, 10)
 
     subscriber = Mosquitto::Client.new
     subscriber.loop_start
     subscriber.on_connect do |rc|
-      subscriber.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
+      subscriber.subscribe(nil, "message_callback", Mosquitto::AT_MOST_ONCE)
     end
     subscriber.connect(TEST_HOST, 1883, 10)
     subscriber.on_message do |msg|

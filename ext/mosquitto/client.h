@@ -3,17 +3,11 @@
 
 typedef struct rb_mosquitto_callback_t rb_mosquitto_callback_t;
 struct rb_mosquitto_callback_t {
-  void *data;
-  pthread_mutex_t mutex;
-  pthread_cond_t  cond;
-  bool handled;
-  rb_mosquitto_callback_t *next;
-};
-
-typedef struct rb_mosquitto_callback_waiting_t rb_mosquitto_callback_waiting_t;
-struct rb_mosquitto_callback_waiting_t {
-  rb_mosquitto_callback_t *callback;
-  bool abort;
+    void *data;
+    pthread_mutex_t mutex;
+    pthread_cond_t  cond;
+    bool handled;
+    rb_mosquitto_callback_t *next;
 };
 
 typedef struct {
@@ -25,7 +19,18 @@ typedef struct {
     VALUE subscribe_cb;
     VALUE unsubscribe_cb;
     VALUE log_cb;
+    VALUE event_thread;
+    pthread_mutex_t callback_mutex;
+    pthread_cond_t callback_cond;
+    rb_mosquitto_callback_t *callback_queue;
 } mosquitto_client_wrapper;
+
+typedef struct rb_mosquitto_callback_waiting_t rb_mosquitto_callback_waiting_t;
+struct rb_mosquitto_callback_waiting_t {
+    mosquitto_client_wrapper *client;
+    rb_mosquitto_callback_t *callback;
+    bool abort;
+};
 
 #define MosquittoGetClient(obj) \
     mosquitto_client_wrapper *client = NULL; \
