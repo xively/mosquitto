@@ -129,7 +129,7 @@ static VALUE rb_mosquitto_event_thread(void *obj)
 void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
     VALUE args[3];
-    MosquittoGetClient((VALUE)obj);
+    mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)obj;
     args[0] = client->connect_cb;
     args[1] = (VALUE)1;
     args[2] = INT2NUM(rc);
@@ -150,7 +150,7 @@ void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq, void 
 void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
     VALUE args[3];
-    MosquittoGetClient((VALUE)obj);
+    mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)obj;
     args[0] = client->disconnect_cb;
     args[1] = (VALUE)1;
     args[2] = INT2NUM(rc);
@@ -160,7 +160,7 @@ void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *mosq, vo
 void rb_mosquitto_client_on_publish_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
     VALUE args[3];
-    MosquittoGetClient((VALUE)obj);
+    mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)obj;
     args[0] = client->publish_cb;
     args[1] = (VALUE)1;
     args[2] = INT2NUM(mid);
@@ -171,7 +171,7 @@ void rb_mosquitto_client_on_message_cb(MOSQ_UNUSED struct mosquitto *mosq, void 
 {
     VALUE args[3];
     VALUE message;
-    MosquittoGetClient((VALUE)obj);
+    mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)obj;
     message = rb_mosquitto_message_alloc(msg);
     args[0] = client->message_cb;
     args[1] = (VALUE)1;
@@ -182,7 +182,7 @@ void rb_mosquitto_client_on_message_cb(MOSQ_UNUSED struct mosquitto *mosq, void 
 void rb_mosquitto_client_on_subscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
     VALUE args[5];
-    MosquittoGetClient((VALUE)obj);
+    mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)obj;
     args[0] = client->subscribe_cb;
     args[1] = (VALUE)3;
     args[2] = INT2NUM(mid);
@@ -194,7 +194,7 @@ void rb_mosquitto_client_on_subscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, voi
 void rb_mosquitto_client_on_unsubscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
     VALUE args[3];
-    MosquittoGetClient((VALUE)obj);
+    mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)obj;
     args[0] = client->unsubscribe_cb;
     args[1] = (VALUE)1;
     args[2] = INT2NUM(mid);
@@ -204,7 +204,7 @@ void rb_mosquitto_client_on_unsubscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, v
 void rb_mosquitto_client_on_log_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int level, const char *str)
 {
     VALUE args[4];
-    MosquittoGetClient((VALUE)obj);
+    mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)obj;
     args[0] = client->log_cb;
     args[1] = (VALUE)2;
     args[2] = INT2NUM(level);
@@ -252,7 +252,7 @@ VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
         cl_id = StringValueCStr(client_id);
     }
     client = Data_Make_Struct(rb_cMosquittoClient, mosquitto_client_wrapper, rb_mosquitto_mark_client, rb_mosquitto_free_client, cl);
-    cl->mosq = mosquitto_new(cl_id, clean_session, (void *)client);
+    cl->mosq = mosquitto_new(cl_id, clean_session, (void *)cl);
     if (cl->mosq == NULL) {
         switch (errno) {
             case EINVAL:
