@@ -883,6 +883,14 @@ VALUE rb_mosquitto_client_max_inflight_messages_equals(VALUE obj, VALUE max_mess
     }
 }
 
+VALUE rb_mosquitto_client_message_retry_equals(VALUE obj, VALUE seconds)
+{
+    MosquittoGetClient(obj);
+    Check_Type(seconds, T_FIXNUM);
+    mosquitto_message_retry_set(client->mosq, INT2NUM(seconds));
+    return Qtrue;
+}
+
 VALUE rb_mosquitto_client_on_connect(int argc, VALUE *argv, VALUE obj)
 {
     VALUE proc, cb;
@@ -994,7 +1002,7 @@ void _init_rb_mosquitto_client()
 
     rb_define_method(rb_cMosquittoClient, "reconnect_delay_set", rb_mosquitto_client_reconnect_delay_set, 3);
     rb_define_method(rb_cMosquittoClient, "max_inflight_messages=", rb_mosquitto_client_max_inflight_messages_equals, 1);
-
+    rb_define_method(rb_cMosquittoClient, "message_retry=", rb_mosquitto_client_message_retry_equals, 1);
 
     /* Callbacks */
 

@@ -279,4 +279,12 @@ class TestClient < MosquittoTestCase
     end
     assert client.max_inflight_messages = 10
   end
+
+  def test_message_retry
+    client = Mosquitto::Client.new
+    assert_raises TypeError do
+      client.message_retry = :invalid
+    end
+    assert client.message_retry = 10
+  end
 end
