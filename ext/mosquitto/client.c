@@ -271,6 +271,7 @@ VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
     cl->unsubscribe_cb = Qnil;
     cl->log_cb = Qnil;
     rb_obj_call_init(client, 0, NULL);
+    mosquitto_user_data_set(cl->mosq, (void *)client);
     return client;
 }
 
