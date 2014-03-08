@@ -271,4 +271,12 @@ class TestClient < MosquittoTestCase
     end
     assert client.reconnect_delay_set(2, 10, true)
   end
+
+  def test_max_inflight_messages
+    client = Mosquitto::Client.new
+    assert_raises TypeError do
+      client.max_inflight_messages = :invalid
+    end
+    assert client.max_inflight_messages = 10
+  end
 end

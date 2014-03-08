@@ -55,7 +55,7 @@ class TestThreads < MosquittoTestCase
     end
 
     threads.each(&:join)
-    assert_equal published, 26
-    assert_equal messages.sort, ('a'..'z').to_a
+    assert_equal 26, published
+    assert_equal ('a'..'z').to_a, messages.sort
   end
 end
