@@ -116,7 +116,7 @@ static VALUE rb_mosquitto_event_thread(void *unused)
 
     while (waiting.abort == false)
     {
-      rb_thread_blocking_region(rb_mosquitto_wait_for_callback_signal, &waiting, rb_mosquitto_stop_waiting_for_callback_signal, &waiting);
+      rb_thread_call_without_gvl(rb_mosquitto_wait_for_callback_signal, &waiting, rb_mosquitto_stop_waiting_for_callback_signal, &waiting);
       if (waiting.callback)
       {
           rb_thread_create(rb_mosquitto_handle_callback, (void *) waiting.callback);
@@ -241,7 +241,7 @@ VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
     char *cl_id = NULL;
     mosquitto_client_wrapper *cl = NULL;
     bool clean_session;
-    rb_scan_args(argc, argv, "01&", &client_id);
+    rb_scan_args(argc, argv, "01", &client_id);
     if (NIL_P(client_id)) {
         clean_session = true;
     } else {
@@ -288,7 +288,7 @@ VALUE rb_mosquitto_client_reinitialise(int argc, VALUE *argv, VALUE obj)
     bool clean_session;
     char *cl_id = NULL;
     MosquittoGetClient(obj);
-    rb_scan_args(argc, argv, "01&", &client_id);
+    rb_scan_args(argc, argv, "01", &client_id);
     if (NIL_P(client_id)) {
         clean_session = true;
     } else {

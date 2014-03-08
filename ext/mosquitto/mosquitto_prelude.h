@@ -12,10 +12,14 @@
 #ifdef RUBINIUS
 #include "rubinius.h"
 #else
-#ifdef HAVE_RB_THREAD_CALL_WITHOUT_GVL
+#ifdef HAVE_RB_THREAD_BLOCKING_REGION
 #include "ruby19.h"
 #else
+#ifdef HAVE_RB_THREAD_CALL_WITHOUT_GVL
+#include "ruby2.h"
+#else
 #include "ruby18.h"
+#endif
 #endif
 #endif
 

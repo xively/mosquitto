@@ -18,7 +18,8 @@ if !have_library 'mosquitto'
   end
 end
 
-have_func('rb_thread_call_without_gvl')
+(have_header('ruby/thread.h') && have_func('rb_thread_call_without_gvl', 'ruby/thread.h')) || have_func('rb_thread_blocking_region')
+
 (have_header("mosquitto.h") && have_library('mosquitto')) or abort("libmosquitto missing!")
 have_header("pthread.h") or abort('pthread support required!')
 have_macro("LIBMOSQUITTO_VERSION_NUMBER", "mosquitto.h")
