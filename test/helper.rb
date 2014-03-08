@@ -7,7 +7,7 @@ require 'stringio'
 Thread.abort_on_exception = true
 
 class MosquittoTestCase < Test::Unit::TestCase
-  TEST_HOST = "localhost"#"test.mosquitto.org"
+  TEST_HOST = "test.mosquitto.org"
 
   undef_method :default_test if method_defined? :default_test
 
