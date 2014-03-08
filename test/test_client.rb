@@ -263,4 +263,12 @@ class TestClient < MosquittoTestCase
     sleep 1.5
     assert_equal "test", message.to_s
   end
+
+  def test_reconnect_delay
+    client = Mosquitto::Client.new
+    assert_raises TypeError do
+      client.reconnect_delay_set(:invalid, 10, true)
+    end
+    assert client.reconnect_delay_set(2, 10, true)
+  end
 end

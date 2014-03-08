@@ -25,7 +25,6 @@ subscriber.on_log do |level,msg|
   p "SUB: #{msg}"
 end
 subscriber.on_connect do |rc|
-  sleep 0.5
   p "Connect #{rc}"
   subscriber.subscribe(nil, "topic", Mosquitto::AT_MOST_ONCE)
 end

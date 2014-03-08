@@ -852,6 +852,22 @@ VALUE rb_mosquitto_client_want_write(VALUE obj)
     return (ret == true) ? Qtrue : Qfalse;
 }
 
+VALUE rb_mosquitto_client_reconnect_delay_set(VALUE obj, VALUE delay, VALUE delay_max, VALUE exp_backoff)
+{
+    int ret;
+    MosquittoGetClient(obj);
+    Check_Type(delay, T_FIXNUM);
+    Check_Type(delay_max, T_FIXNUM);
+    ret = mosquitto_reconnect_delay_set(client->mosq, INT2NUM(delay), INT2NUM(delay_max), ((exp_backoff == Qtrue) ? true : false));
+    switch (ret) {
+       case MOSQ_ERR_INVAL:
+           MosquittoError("invalid input params");
+           break;
+       default:
+           return Qtrue;
+    }
+}
+
 VALUE rb_mosquitto_client_on_connect(int argc, VALUE *argv, VALUE obj)
 {
     VALUE proc, cb;
@@ -958,6 +974,9 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "loop_read", rb_mosquitto_client_loop_read, 1);
     rb_define_method(rb_cMosquittoClient, "loop_write", rb_mosquitto_client_loop_write, 1);
     rb_define_method(rb_cMosquittoClient, "loop_misc", rb_mosquitto_client_loop_misc, 0);
+
+    /* Tuning */
+    rb_define_method(rb_cMosquittoClient, "reconnect_delay_set", rb_mosquitto_client_reconnect_delay_set, 3);
 
     /* Callbacks */
 

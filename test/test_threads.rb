@@ -23,14 +23,13 @@ class TestThreads < MosquittoTestCase
 
   def test_pub_sub
     threads = []
-    pub_queue = ('a'..'z').to_a
     published = 0
     messages = []
     threads << Thread.new do
       publisher = Mosquitto::Client.new
       publisher.loop_start
       publisher.on_connect do |rc|
-        pub_queue.each do |message|
+        ('a'..'z').to_a.each do |message|
           publisher.publish(nil, "test_pub_sub", message, Mosquitto::AT_MOST_ONCE, true)
         end
       end
