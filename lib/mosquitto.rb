@@ -11,4 +11,6 @@ end
 
 require 'mosquitto/version' unless defined? Mosquitto::VERSION
 
+require 'mosquitto/client'
+
 at_exit { Mosquitto.cleanup }
