@@ -376,6 +376,40 @@ VALUE rb_mosquitto_client_connect(VALUE obj, VALUE host, VALUE port, VALUE keepa
     }
 }
 
+static void *rb_mosquitto_client_connect_bind_nogvl(void *ptr)
+{
+    struct nogvl_connect_args *args = ptr;
+    return (void *)mosquitto_connect_bind(args->mosq, args->host, args->port, args->keepalive, args->bind_address);
+}
+
+VALUE rb_mosquitto_client_connect_bind(VALUE obj, VALUE host, VALUE port, VALUE keepalive, VALUE bind_address)
+{
+    struct nogvl_connect_args args;
+    int ret;
+    MosquittoGetClient(obj);
+    Check_Type(host, T_STRING);
+    Check_Type(port, T_FIXNUM);
+    Check_Type(keepalive, T_FIXNUM);
+    Check_Type(bind_address, T_STRING);
+    args.mosq = client->mosq;
+    args.host = StringValueCStr(host);
+    args.port = NUM2INT(port);
+    args.keepalive = NUM2INT(keepalive);
+    args.bind_address = StringValueCStr(bind_address);
+    ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_connect_bind_nogvl, (void *)&args, RUBY_UBF_IO, 0);
+    switch (ret) {
+       case MOSQ_ERR_INVAL:
+           MosquittoError("invalid input params");
+           break;
+       case MOSQ_ERR_ERRNO:
+           rb_sys_fail("mosquitto_connect_bind");
+           break;
+       default:
+           return Qtrue;
+    }
+}
+
+
 static void *rb_mosquitto_client_connect_async_nogvl(void *ptr)
 {
     struct nogvl_connect_args *args = ptr;
@@ -957,6 +991,7 @@ void _init_rb_mosquitto_client()
     /* Network */
 
     rb_define_method(rb_cMosquittoClient, "connect", rb_mosquitto_client_connect, 3);
+    rb_define_method(rb_cMosquittoClient, "connect_bind", rb_mosquitto_client_connect_bind, 4);
     rb_define_method(rb_cMosquittoClient, "connect_async", rb_mosquitto_client_connect_async, 3);
     rb_define_method(rb_cMosquittoClient, "reconnect", rb_mosquitto_client_reconnect, 0);
     rb_define_method(rb_cMosquittoClient, "disconnect", rb_mosquitto_client_disconnect, 0);

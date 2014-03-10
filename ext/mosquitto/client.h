@@ -44,6 +44,7 @@ struct nogvl_connect_args {
     char *host;
     int port;
     int keepalive;
+    char *bind_address
 };
 
 struct nogvl_loop_stop_args {
