@@ -1,15 +1,6 @@
 #ifndef MOSQUITTO_CLIENT_H
 #define MOSQUITTO_CLIENT_H
 
-typedef struct rb_mosquitto_callback_t rb_mosquitto_callback_t;
-struct rb_mosquitto_callback_t {
-    void *data;
-    pthread_mutex_t mutex;
-    pthread_cond_t  cond;
-    bool handled;
-    rb_mosquitto_callback_t *next;
-};
-
 typedef struct {
     struct mosquitto *mosq;
     VALUE connect_cb;
@@ -19,18 +10,7 @@ typedef struct {
     VALUE subscribe_cb;
     VALUE unsubscribe_cb;
     VALUE log_cb;
-    VALUE event_thread;
-    pthread_mutex_t callback_mutex;
-    pthread_cond_t callback_cond;
-    rb_mosquitto_callback_t *callback_queue;
 } mosquitto_client_wrapper;
-
-typedef struct rb_mosquitto_callback_waiting_t rb_mosquitto_callback_waiting_t;
-struct rb_mosquitto_callback_waiting_t {
-    mosquitto_client_wrapper *client;
-    rb_mosquitto_callback_t *callback;
-    bool abort;
-};
 
 #define MosquittoGetClient(obj) \
     mosquitto_client_wrapper *client = NULL; \
@@ -46,6 +26,18 @@ struct rb_mosquitto_callback_waiting_t {
         if (rb_proc_arity(cb) != arity) \
           rb_raise(rb_eArgError, "Callback expects %d argument(s), got %d", arity, NUM2INT(rb_proc_arity(cb))); \
     }
+
+typedef struct mosquitto_callback_t mosquitto_callback_t;
+struct mosquitto_callback_t {
+    VALUE data[5];
+    mosquitto_callback_t *next;
+};
+
+typedef struct mosquitto_callback_waiting_t mosquitto_callback_waiting_t;
+struct mosquitto_callback_waiting_t {
+    mosquitto_callback_t *callback;
+    bool abort;
+};
 
 struct nogvl_connect_args {
     struct mosquitto *mosq;

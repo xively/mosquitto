@@ -53,6 +53,8 @@ class TestClient < MosquittoTestCase
       client.connect(:invalid, 1883, 10)
     end
     assert client.connect(TEST_HOST, 1883, 10)
+  ensure
+    client.loop_stop(true)
   end
 
   def test_connect_async
@@ -64,6 +66,8 @@ class TestClient < MosquittoTestCase
     assert client.connect_async(TEST_HOST, 1883, 10)
     sleep 1
     assert client.socket != -1
+  ensure
+    client.loop_stop(true)
   end
 
   def test_disconnect
@@ -74,6 +78,8 @@ class TestClient < MosquittoTestCase
     end
     assert client.connect(TEST_HOST, 1883, 10)
     assert client.disconnect
+  ensure
+    client.loop_stop(true)
   end
 
   def test_reconnect
@@ -147,6 +153,7 @@ class TestClient < MosquittoTestCase
     assert client.publish(nil, "loop", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.loop(10,10)
   end
+
 =begin
   def test_loop_forever
     connected = false
@@ -169,6 +176,7 @@ class TestClient < MosquittoTestCase
     assert connected
   end
 =end
+
   def test_loop_stop_start
     client = Mosquitto::Client.new
     assert client.connect(TEST_HOST, 1883, 10)
@@ -208,6 +216,7 @@ class TestClient < MosquittoTestCase
     end
     assert client.connect(TEST_HOST, 1883, 10)
     assert client.disconnect
+    sleep 0.5
     assert_equal 2, logs.size
     assert_match(/CONNECT/, logs[0])
     assert_match(/DISCONNECT/, logs[1])
@@ -250,6 +259,8 @@ class TestClient < MosquittoTestCase
       publisher.publish(nil, "message_callback", "test", Mosquitto::AT_MOST_ONCE, true)
     end
     publisher.connect(TEST_HOST, 1883, 10)
+    sleep 2
+    publisher.loop_stop(true)
 
     subscriber = Mosquitto::Client.new
     subscriber.loop_start
@@ -260,7 +271,8 @@ class TestClient < MosquittoTestCase
     subscriber.on_message do |msg|
       message = msg
     end
-    sleep 1.5
+    sleep 2
+    subscriber.loop_stop(true)
     assert_equal "test", message.to_s
   end
 

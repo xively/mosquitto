@@ -3,6 +3,7 @@
 require 'test/unit'
 require 'mosquitto'
 require 'stringio'
+require 'thread'
 
 Thread.abort_on_exception = true
 

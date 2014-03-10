@@ -10,6 +10,7 @@ class TestThreads < MosquittoTestCase
       publisher.loop_start
       assert publisher.connect(TEST_HOST, 1883, 10)
       sleep 1
+      publisher.loop_stop(true)
     end
 
     threads << Thread.new do
@@ -17,6 +18,7 @@ class TestThreads < MosquittoTestCase
       subscriber.loop_start
       assert subscriber.connect(TEST_HOST, 1883, 10)
       sleep 1
+      subscriber.loop_stop(true)
     end
     threads.each(&:join)
   end
@@ -24,7 +26,7 @@ class TestThreads < MosquittoTestCase
   def test_pub_sub
     threads = []
     published = 0
-    messages = []
+    messages = Queue.new
     threads << Thread.new do
       publisher = Mosquitto::Client.new
       publisher.loop_start
@@ -39,6 +41,7 @@ class TestThreads < MosquittoTestCase
       assert publisher.connect(TEST_HOST, 1883, 10)
       sleep 2
       assert_equal published, 26
+      publisher.loop_stop(true)
     end
 
     threads << Thread.new do
@@ -52,10 +55,12 @@ class TestThreads < MosquittoTestCase
       end
       assert subscriber.connect(TEST_HOST, 1883, 10)
       sleep 2
+      subscriber.loop_stop(true)
     end
 
     threads.each(&:join)
     assert_equal 26, published
-    assert_equal ('a'..'z').to_a, messages.sort
+    assert_equal 26, messages.size
+    assert_equal 'z', messages.pop
   end
 end

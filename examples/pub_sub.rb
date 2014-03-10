@@ -18,6 +18,8 @@ publisher.connect("localhost", 1883, 10)
 publisher.on_publish do |mid|
   p "Published #{mid}"
 end
+sleep 1.5
+publisher.loop_stop(true)
 
 subscriber = Mosquitto::Client.new
 subscriber.loop_start
@@ -35,5 +37,5 @@ subscriber.connect("localhost", 1883, 10)
 subscriber.on_message do |msg|
   p "Message #{msg}"
 end
-
-sleep 2
+sleep 1.5
+subscriber.loop_stop(true)
