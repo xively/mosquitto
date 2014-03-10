@@ -81,6 +81,19 @@ class TestClient < MosquittoTestCase
     client.loop_stop(true)
   end
 
+  def test_connect_bind_async
+    client = Mosquitto::Client.new
+    assert client.loop_start
+    assert_raises TypeError do
+      client.connect_bind_async(TEST_HOST, 1883, 10, :invalid)
+    end
+    assert client.connect_bind_async(TEST_HOST, 1883, 10, '0.0.0.0')
+    sleep 1
+    assert client.socket != -1
+  ensure
+    client.loop_stop(true)
+  end
+
   def test_disconnect
     client = Mosquitto::Client.new
     assert client.loop_start
