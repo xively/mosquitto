@@ -391,6 +391,31 @@ VALUE rb_mosquitto_client_tls_insecure_set(VALUE obj, VALUE insecure)
     }
 }
 
+VALUE rb_mosquitto_client_tls_opts_set(VALUE obj, VALUE cert_reqs, VALUE tls_version, VALUE ciphers)
+{
+    int ret;
+    MosquittoGetClient(obj);
+    Check_Type(cert_reqs, T_FIXNUM);
+    if (!NIL_P(tls_version)) Check_Type(tls_version, T_STRING);
+    if (!NIL_P(ciphers)) Check_Type(ciphers, T_STRING);
+
+    if (NUM2INT(cert_reqs) != 0 && NUM2INT(cert_reqs) != 1) {
+        MosquittoError("TLS verification requirement should be one of Mosquitto::SSL_VERIFY_NONE or Mosquitto::SSL_VERIFY_PEER");
+    }
+
+    ret = mosquitto_tls_opts_set(client->mosq, NUM2INT(cert_reqs), (NIL_P(tls_version) ? NULL : StringValueCStr(tls_version)), (NIL_P(ciphers) ? NULL : StringValueCStr(ciphers)));
+    switch (ret) {
+       case MOSQ_ERR_INVAL:
+           MosquittoError("invalid input params");
+           break;
+       case MOSQ_ERR_NOMEM:
+           rb_memerror();
+           break;
+       default:
+           return Qtrue;
+    }
+}
+
 static void *rb_mosquitto_client_connect_nogvl(void *ptr)
 {
     struct nogvl_connect_args *args = ptr;
@@ -1097,6 +1122,7 @@ void _init_rb_mosquitto_client()
 
     rb_define_method(rb_cMosquittoClient, "tls_set", rb_mosquitto_client_tls_set, 4);
     rb_define_method(rb_cMosquittoClient, "tls_insecure=", rb_mosquitto_client_tls_insecure_set, 1);
+    rb_define_method(rb_cMosquittoClient, "tls_opts_set", rb_mosquitto_client_tls_opts_set, 3);
 
     /* Callbacks */
 

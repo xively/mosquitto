@@ -42,4 +42,16 @@ class TestTls < MosquittoTestCase
     end
     assert (client.tls_insecure = true)
   end
+
+  def test_tls_opts_set
+    client = Mosquitto::Client.new
+    assert_raises Mosquitto::Error do
+      client.tls_opts_set(3, nil, nil)
+    end
+    assert_raises TypeError do
+      client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, :invalid, nil)
+    end
+    assert client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil)
+    assert client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil)
+  end
 end
