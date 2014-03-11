@@ -34,4 +34,12 @@ class TestTls < MosquittoTestCase
   ensure
     client.loop_stop(true)
   end
+
+  def test_insecure
+    client = Mosquitto::Client.new
+    assert_raises TypeError do
+      client.tls_insecure = nil
+    end
+    assert (client.tls_insecure = true)
+  end
 end

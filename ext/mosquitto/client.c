@@ -345,6 +345,52 @@ VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
     }
 }
 
+VALUE rb_mosquitto_client_tls_set(VALUE obj, VALUE cafile, VALUE capath, VALUE certfile, VALUE keyfile)
+{
+    int ret;
+    MosquittoGetClient(obj);
+    if (!NIL_P(cafile)) Check_Type(cafile, T_STRING);
+    if (!NIL_P(capath)) Check_Type(capath, T_STRING);
+    if (!NIL_P(certfile)) Check_Type(certfile, T_STRING);
+    if (!NIL_P(keyfile)) Check_Type(keyfile, T_STRING);
+
+    if (NIL_P(cafile) && NIL_P(capath)) MosquittoError("Either CA path or CA file is required!");
+    if (NIL_P(certfile) && !NIL_P(keyfile)) MosquittoError("Key file can only be used with a certificate file!");
+    if (NIL_P(keyfile) && !NIL_P(certfile)) MosquittoError("Certificate file also requires a key file!");
+
+    ret = mosquitto_tls_set(client->mosq, (NIL_P(cafile) ? NULL : StringValueCStr(cafile)), (NIL_P(capath) ? NULL : StringValueCStr(capath)), (NIL_P(certfile) ? NULL : StringValueCStr(certfile)), (NIL_P(keyfile) ? NULL : StringValueCStr(keyfile)), NULL);
+    switch (ret) {
+       case MOSQ_ERR_INVAL:
+           MosquittoError("invalid input params");
+           break;
+       case MOSQ_ERR_NOMEM:
+           rb_memerror();
+           break;
+       case MOSQ_ERR_NOT_SUPPORTED:
+           MosquittoError("thread support is not available");
+       default:
+           return Qtrue;
+    }
+}
+
+VALUE rb_mosquitto_client_tls_insecure_set(VALUE obj, VALUE insecure)
+{
+    int ret;
+    MosquittoGetClient(obj);
+    if (insecure != Qtrue && insecure != Qfalse) {
+         rb_raise(rb_eTypeError, "changing TLS verification semantics requires a boolean value");
+    }
+
+    ret = mosquitto_tls_insecure_set(client->mosq, ((insecure == Qtrue) ? true : false));
+    switch (ret) {
+       case MOSQ_ERR_INVAL:
+           MosquittoError("invalid input params");
+           break;
+       default:
+           return Qtrue;
+    }
+}
+
 static void *rb_mosquitto_client_connect_nogvl(void *ptr)
 {
     struct nogvl_connect_args *args = ptr;
@@ -1046,6 +1092,11 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "reconnect_delay_set", rb_mosquitto_client_reconnect_delay_set, 3);
     rb_define_method(rb_cMosquittoClient, "max_inflight_messages=", rb_mosquitto_client_max_inflight_messages_equals, 1);
     rb_define_method(rb_cMosquittoClient, "message_retry=", rb_mosquitto_client_message_retry_equals, 1);
+
+    /* TLS */
+
+    rb_define_method(rb_cMosquittoClient, "tls_set", rb_mosquitto_client_tls_set, 4);
+    rb_define_method(rb_cMosquittoClient, "tls_insecure=", rb_mosquitto_client_tls_insecure_set, 1);
 
     /* Callbacks */
 

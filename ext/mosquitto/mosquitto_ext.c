@@ -48,6 +48,11 @@ void Init_mosquitto_ext()
     rb_define_const(rb_mMosquitto, "LOG_UNSUBSCRIBE", INT2NUM(0x40));
     rb_define_const(rb_mMosquitto, "LOG_ALL", INT2NUM(0xFFFF));
 
+    /* TLS constants */
+
+    rb_define_const(rb_mMosquitto, "SSL_VERIFY_NONE", INT2NUM(0));
+    rb_define_const(rb_mMosquitto, "SSL_VERIFY_PEER", INT2NUM(1));
+
     rb_eMosquittoError = rb_define_class_under(rb_mMosquitto, "Error", rb_eStandardError);
 
     rb_define_module_function(rb_mMosquitto, "version", rb_mosquitto_version, 0);
