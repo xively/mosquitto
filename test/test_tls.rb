@@ -54,4 +54,12 @@ class TestTls < MosquittoTestCase
     assert client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil)
     assert client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil)
   end
+
+  def test_tls_psk_set
+    client = Mosquitto::Client.new
+    assert_raises TypeError do
+      client.tls_psk_set("deadbeef", :invalid, nil)
+    end
+    assert client.tls_psk_set("deadbeef", "psk-id", nil)
+  end
 end

@@ -416,6 +416,27 @@ VALUE rb_mosquitto_client_tls_opts_set(VALUE obj, VALUE cert_reqs, VALUE tls_ver
     }
 }
 
+VALUE rb_mosquitto_client_tls_psk_set(VALUE obj, VALUE psk, VALUE identity, VALUE ciphers)
+{
+    int ret;
+    MosquittoGetClient(obj);
+    Check_Type(psk, T_STRING);
+    Check_Type(identity, T_STRING);
+    if (!NIL_P(ciphers)) Check_Type(ciphers, T_STRING);
+
+    ret = mosquitto_tls_psk_set(client->mosq, StringValueCStr(psk), StringValueCStr(identity), (NIL_P(ciphers) ? NULL : StringValueCStr(ciphers)));
+    switch (ret) {
+       case MOSQ_ERR_INVAL:
+           MosquittoError("invalid input params");
+           break;
+       case MOSQ_ERR_NOMEM:
+           rb_memerror();
+           break;
+       default:
+           return Qtrue;
+    }
+}
+
 static void *rb_mosquitto_client_connect_nogvl(void *ptr)
 {
     struct nogvl_connect_args *args = ptr;
@@ -479,7 +500,6 @@ VALUE rb_mosquitto_client_connect_bind(VALUE obj, VALUE host, VALUE port, VALUE 
            return Qtrue;
     }
 }
-
 
 static void *rb_mosquitto_client_connect_async_nogvl(void *ptr)
 {
@@ -1123,6 +1143,7 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "tls_set", rb_mosquitto_client_tls_set, 4);
     rb_define_method(rb_cMosquittoClient, "tls_insecure=", rb_mosquitto_client_tls_insecure_set, 1);
     rb_define_method(rb_cMosquittoClient, "tls_opts_set", rb_mosquitto_client_tls_opts_set, 3);
+    rb_define_method(rb_cMosquittoClient, "tls_psk_set", rb_mosquitto_client_tls_psk_set, 3);
 
     /* Callbacks */
 
