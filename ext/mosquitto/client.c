@@ -367,7 +367,7 @@ VALUE rb_mosquitto_client_tls_set(VALUE obj, VALUE cafile, VALUE capath, VALUE c
            rb_memerror();
            break;
        case MOSQ_ERR_NOT_SUPPORTED:
-           MosquittoError("thread support is not available");
+           MosquittoError("TLS support is not available");
        default:
            return Qtrue;
     }
@@ -386,6 +386,8 @@ VALUE rb_mosquitto_client_tls_insecure_set(VALUE obj, VALUE insecure)
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
            break;
+       case MOSQ_ERR_NOT_SUPPORTED:
+           MosquittoError("TLS support is not available");
        default:
            return Qtrue;
     }
@@ -411,6 +413,8 @@ VALUE rb_mosquitto_client_tls_opts_set(VALUE obj, VALUE cert_reqs, VALUE tls_ver
        case MOSQ_ERR_NOMEM:
            rb_memerror();
            break;
+       case MOSQ_ERR_NOT_SUPPORTED:
+           MosquittoError("TLS support is not available");
        default:
            return Qtrue;
     }
@@ -432,6 +436,8 @@ VALUE rb_mosquitto_client_tls_psk_set(VALUE obj, VALUE psk, VALUE identity, VALU
        case MOSQ_ERR_NOMEM:
            rb_memerror();
            break;
+       case MOSQ_ERR_NOT_SUPPORTED:
+           MosquittoError("TLS support is not available");
        default:
            return Qtrue;
     }
