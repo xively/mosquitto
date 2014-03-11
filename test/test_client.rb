@@ -50,9 +50,9 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     assert_raises TypeError do
-      client.connect(:invalid, 1883, 10)
+      client.connect(:invalid, TEST_PORT, 10)
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
   ensure
     client.loop_stop(true)
   end
@@ -61,9 +61,9 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     assert_raises TypeError do
-      client.connect_bind("localhost", 1883, 10, :invalid)
+      client.connect_bind("localhost", TEST_PORT, 10, :invalid)
     end
-    assert client.connect_bind(TEST_HOST, 1883, 10, "0.0.0.0")
+    assert client.connect_bind(TEST_HOST, TEST_PORT, 10, "0.0.0.0")
   ensure
     client.loop_stop(true)
   end
@@ -72,9 +72,9 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     assert_raises TypeError do
-      client.connect_async(:invalid, 1883, 10)
+      client.connect_async(:invalid, TEST_PORT, 10)
     end
-    assert client.connect_async(TEST_HOST, 1883, 10)
+    assert client.connect_async(TEST_HOST, TEST_PORT, 10)
     sleep 1
     assert client.socket != -1
   ensure
@@ -85,9 +85,9 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     assert_raises TypeError do
-      client.connect_bind_async(TEST_HOST, 1883, 10, :invalid)
+      client.connect_bind_async(TEST_HOST, TEST_PORT, 10, :invalid)
     end
-    assert client.connect_bind_async(TEST_HOST, 1883, 10, '0.0.0.0')
+    assert client.connect_bind_async(TEST_HOST, TEST_PORT, 10, '0.0.0.0')
     sleep 1
     assert client.socket != -1
   ensure
@@ -100,7 +100,7 @@ class TestClient < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.disconnect
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert client.disconnect
   ensure
     client.loop_stop(true)
@@ -111,7 +111,7 @@ class TestClient < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.reconnect
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert client.reconnect
   end
 
@@ -120,7 +120,7 @@ class TestClient < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.publish(nil, "publish", "test", Mosquitto::AT_MOST_ONCE, true)
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert_raises TypeError do
       client.publish(nil, :invalid, "test", Mosquitto::AT_MOST_ONCE, true)
     end
@@ -132,7 +132,7 @@ class TestClient < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.subscribe(nil, "subscribe", Mosquitto::AT_MOST_ONCE)
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert_raises TypeError do
       client.subscribe(nil, :topic, Mosquitto::AT_MOST_ONCE)
     end
@@ -144,7 +144,7 @@ class TestClient < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.unsubscribe(nil, "unsubscribe")
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert_raises TypeError do
       client.unsubscribe(nil, :topic)
     end
@@ -153,7 +153,7 @@ class TestClient < MosquittoTestCase
 
   def test_subscribe_unsubscribe
     client = Mosquitto::Client.new
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert client.subscribe(nil, "subscribe_unsubscribe", Mosquitto::AT_MOST_ONCE)
     assert client.unsubscribe(nil, "subscribe_unsubscribe")
   end
@@ -162,7 +162,7 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert_equal(-1, client.socket)
     assert client.socket == -1
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert_instance_of Fixnum, client.socket
     sleep 1
     assert client.socket != -1
@@ -173,7 +173,7 @@ class TestClient < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.loop(10,10)
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert client.publish(nil, "loop", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.loop(10,10)
   end
@@ -203,7 +203,7 @@ class TestClient < MosquittoTestCase
 
   def test_loop_stop_start
     client = Mosquitto::Client.new
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert client.publish(nil, "loop_stop_start", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.loop_start
     assert client.loop_stop(true)
@@ -222,7 +222,7 @@ class TestClient < MosquittoTestCase
     client.on_log do |level, msg|
       p "log [#{level}]: #{msg}"
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     sleep 1.5
     assert client.disconnect
     sleep 1.5
@@ -238,7 +238,7 @@ class TestClient < MosquittoTestCase
     client.on_log do |level, msg|
       logs << msg
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert client.disconnect
     sleep 0.5
     assert_equal 2, logs.size
@@ -262,7 +262,7 @@ class TestClient < MosquittoTestCase
     client.on_log do |level, msg|
       p "log [#{level}]: #{msg}"
     end
-    assert client.connect(TEST_HOST, 1883, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
     sleep 1.5
     assert client.subscribe(nil, "test_sub_unsub", Mosquitto::AT_MOST_ONCE)
     assert client.unsubscribe(nil, "test_sub_unsub")
@@ -282,7 +282,7 @@ class TestClient < MosquittoTestCase
     publisher.on_connect do |rc|
       publisher.publish(nil, "message_callback", "test", Mosquitto::AT_MOST_ONCE, true)
     end
-    publisher.connect(TEST_HOST, 1883, 10)
+    publisher.connect(TEST_HOST, TEST_PORT, 10)
     sleep 2
     publisher.loop_stop(true)
 
@@ -291,7 +291,7 @@ class TestClient < MosquittoTestCase
     subscriber.on_connect do |rc|
       subscriber.subscribe(nil, "message_callback", Mosquitto::AT_MOST_ONCE)
     end
-    subscriber.connect(TEST_HOST, 1883, 10)
+    subscriber.connect(TEST_HOST, TEST_PORT, 10)
     subscriber.on_message do |msg|
       message = msg
     end
