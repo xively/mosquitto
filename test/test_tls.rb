@@ -22,15 +22,15 @@ class TestTls < MosquittoTestCase
   def test_connect
     connected = false
     client = Mosquitto::Client.new
-    assert client.loop_start
     client.logger = Logger.new(STDOUT)
+    assert client.loop_start
     client.on_connect do |rc|
       connected = true
     end
     assert client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil)
     client.tls_set(ssl_object('all-ca.crt'), nil, ssl_object('client.crt'), ssl_object('client.key'))
     assert client.connect(TLS_TEST_HOST, TLS_TEST_PORT, 10)
-    sleep 2
+    sleep 1
     assert connected
   ensure
     client.loop_stop(true)
