@@ -24,7 +24,7 @@ class MosquittoTestCase < Test::Unit::TestCase
     File.expand_path("../ssl/#{file}", __FILE__)
   end
 
-  if ENV['STRESS_GC']
+  if ENV['STRESS_GC'] == '1'
     def setup
       GC.stress = true
     end
