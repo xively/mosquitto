@@ -19,4 +19,5 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.add_development_dependency('rake-compiler', '~> 0.9.2')
+  s.add_development_dependency('yard')
 end

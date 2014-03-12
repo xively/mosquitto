@@ -18,3 +18,4 @@ doc/*
 pkg
 scratch
 ext/mosquitto/Makefile
+.yardoc

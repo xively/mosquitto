@@ -5,14 +5,10 @@ require 'rake' unless defined?(Rake)
 
 require 'rake/extensiontask'
 require 'rake/testtask'
-require 'rdoc/task'
+require 'yard'
 
-RDOC_FILES = FileList["README.rdoc", "ext/mosquitto/mosquitto_ext.c", "ext/mosquitto/client.c", "ext/mosquitto/message.c"]
-
-Rake::RDocTask.new do |rd|
-  rd.main = "README.rdoc"
-  rd.rdoc_dir = "doc"
-  rd.rdoc_files.include(RDOC_FILES)
+YARD::Rake::YardocTask.new do |t|
+  t.files   = ['README.rdoc', 'lib/**/*.rb', "ext/mosquitto/*.c"]
 end
 
 Rake::ExtensionTask.new('mosquitto') do |ext|
