@@ -1240,9 +1240,15 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "connect_bind_async", rb_mosquitto_client_connect_bind_async, 4);
     rb_define_method(rb_cMosquittoClient, "reconnect", rb_mosquitto_client_reconnect, 0);
     rb_define_method(rb_cMosquittoClient, "disconnect", rb_mosquitto_client_disconnect, 0);
+
+    /* Messages */
+
     rb_define_method(rb_cMosquittoClient, "publish", rb_mosquitto_client_publish, 5);
     rb_define_method(rb_cMosquittoClient, "subscribe", rb_mosquitto_client_subscribe, 3);
     rb_define_method(rb_cMosquittoClient, "unsubscribe", rb_mosquitto_client_unsubscribe, 2);
+
+    /* Main / event loop specific */
+
     rb_define_method(rb_cMosquittoClient, "socket", rb_mosquitto_client_socket, 0);
     rb_define_method(rb_cMosquittoClient, "loop", rb_mosquitto_client_loop, 2);
     rb_define_method(rb_cMosquittoClient, "loop_start", rb_mosquitto_client_loop_start, 0);
@@ -1251,6 +1257,7 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "loop_read", rb_mosquitto_client_loop_read, 1);
     rb_define_method(rb_cMosquittoClient, "loop_write", rb_mosquitto_client_loop_write, 1);
     rb_define_method(rb_cMosquittoClient, "loop_misc", rb_mosquitto_client_loop_misc, 0);
+    rb_define_method(rb_cMosquittoClient, "want_write?", rb_mosquitto_client_want_write, 0);
 
     /* Tuning */
 

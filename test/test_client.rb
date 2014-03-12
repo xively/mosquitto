@@ -209,6 +209,12 @@ class TestClient < MosquittoTestCase
     assert client.loop_stop(true)
   end
 
+  def test_want_write
+    client = Mosquitto::Client.new
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert !client.want_write?
+  end
+
   def test_connect_disconnect_callback
     connected, disconnected = false
     client = Mosquitto::Client.new
