@@ -1,5 +1,10 @@
 #include "mosquitto_ext.h"
 
+/*
+ * :nodoc:
+ *  GC callback for releasing an out of scope Mosquitto::Message object
+ *
+ */
 static void rb_mosquitto_free_message(void *ptr)
 {
     mosquitto_message_wrapper *message = (mosquitto_message_wrapper *)ptr;
@@ -9,6 +14,12 @@ static void rb_mosquitto_free_message(void *ptr)
     }
 }
 
+/*
+ * :nodoc:
+ *  Allocator function for Mosquitto::Message. This is only ever called from within an on_message callback
+ *  within the binding scope, NEVER by the user.
+ *
+ */
 VALUE rb_mosquitto_message_alloc(const struct mosquitto_message *msg)
 {
     VALUE message;

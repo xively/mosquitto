@@ -2,6 +2,11 @@
 
 static VALUE rb_mosquitto_run_callback(mosquitto_callback_t *callback);
 
+/*
+ * :nodoc:
+ *  Pushes a callback onto the client's callback queue. The callback runs within the context of an event thread.
+ *
+ */
 static void mosquitto_callback_queue_push(mosquitto_callback_t *cb)
 {
     mosquitto_client_wrapper *client = cb->client;
@@ -9,6 +14,11 @@ static void mosquitto_callback_queue_push(mosquitto_callback_t *cb)
     client->callback_queue = cb;
 }
 
+/*
+ * :nodoc:
+ *  Pops a callback off the client's callback queue. The callback runs within the context of an event thread.
+ *
+ */
 static mosquitto_callback_t *mosquitto_callback_queue_pop(mosquitto_client_wrapper *client)
 {
     mosquitto_callback_t *cb = client->callback_queue;
@@ -20,6 +30,14 @@ static mosquitto_callback_t *mosquitto_callback_queue_pop(mosquitto_client_wrapp
     return cb;
 }
 
+/*
+ * :nodoc:
+ *  Runs without the GIL (Global Interpreter Lock) and polls the client's callback queue for any callbacks
+ *  to handle.
+ *
+ *  Only applicable to clients that run with the threaded Mosquitto::Client#loop_start event loop
+ *
+ */
 static void *mosquitto_wait_for_callbacks(void *w)
 {
     mosquitto_callback_waiting_t *waiter = (mosquitto_callback_waiting_t *)w;
@@ -35,6 +53,13 @@ static void *mosquitto_wait_for_callbacks(void *w)
     return (void *)Qnil;
 }
 
+/*
+ * :nodoc:
+ *  Unblocking function for the callback poller - invoked when the event thread should exit.
+ *
+ *  Only applicable to clients that run with the threaded Mosquitto::Client#loop_start event loop
+ *
+ */
 static void mosquitto_stop_waiting_for_callbacks(void *w)
 {
     mosquitto_callback_waiting_t *waiter = (mosquitto_callback_waiting_t *)w;
@@ -46,6 +71,15 @@ static void mosquitto_stop_waiting_for_callbacks(void *w)
     pthread_cond_signal(&client->callback_cond);
 }
 
+/*
+ * :nodoc:
+ *  Enqueues a callback to be handled by the event thread for a given client.
+ *
+ *  Callbacks for clients that don't use the threaded Mosquitto::Client#loop_start event loop are invoked
+ *  directly within context of the current Ruby thread. Thus there's no locking overhead and associated
+ *  cruft.
+ *
+ */
 static void rb_mosquitto_queue_callback(mosquitto_callback_t *callback)
 {
     mosquitto_client_wrapper *client = callback->client;
@@ -59,6 +93,12 @@ static void rb_mosquitto_queue_callback(mosquitto_callback_t *callback)
     }
 }
 
+/*
+ * :nodoc:
+ *  Main callback dispatch method. Invokes callback procedures with variable argument counts. It's expected
+ *  to raise exceptions - they're handled by a wrapper function.
+ *
+ */
 static VALUE rb_mosquitto_funcall_protected0(VALUE *args)
 {
     int argc = args[1];
@@ -74,12 +114,24 @@ static VALUE rb_mosquitto_funcall_protected0(VALUE *args)
     return Qnil;
 }
 
+/*
+ * :nodoc:
+ *  Invokes the main callback dispatch method, but tracks error state and allows us to take appropriate action
+ *  on exception.
+ *
+ */
 static VALUE rb_mosquitto_funcall_protected(int *error_tag, VALUE *args)
 {
     rb_protect((VALUE(*)(VALUE))rb_mosquitto_funcall_protected0, (VALUE)args, error_tag);
     return Qnil;
 }
 
+/*
+ * :nodoc:
+ *  Releases resources allocated for a given callback. Mostly callback specific arguments copied from libmosquitto
+ *  callback arguments for later processing.
+ *
+ */
 static void rb_mosquitto_free_callback(mosquitto_callback_t *callback)
 {
     if (callback->type == ON_LOG_CALLBACK) {
@@ -91,6 +143,12 @@ static void rb_mosquitto_free_callback(mosquitto_callback_t *callback)
     xfree(callback);
 }
 
+/*
+ * :nodoc:
+ *  Our main callback handler within the Ruby VM. I sets up arguments, it's safe to raise exceptions here and coerces
+ *  C specific callback arguments to Ruby counterparts prior to method dispatch.
+ *
+ */
 static void rb_mosquitto_handle_callback(int *error_tag, mosquitto_callback_t *callback)
 {
     VALUE args[5];
@@ -176,6 +234,12 @@ static void rb_mosquitto_handle_callback(int *error_tag, mosquitto_callback_t *c
         }
 }
 
+/*
+ * :nodoc:
+ *  Wrapper function for running callbacks. It respects error / exception status as well as frees any resources
+ *  allocated specific to callback processing.
+ *
+ */
 static VALUE rb_mosquitto_run_callback(mosquitto_callback_t *callback)
 {
     int error_tag;
@@ -184,6 +248,11 @@ static VALUE rb_mosquitto_run_callback(mosquitto_callback_t *callback)
     if (error_tag) rb_jump_tag(error_tag);
 }
 
+/*
+ * :nodoc:
+ *  The callback thread - the main workhorse for the threaded Mosquitto::Client#loop_start event loop.
+ *
+ */
 static VALUE rb_mosquitto_callback_thread(void *obj)
 {
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)obj;
@@ -203,6 +272,11 @@ static VALUE rb_mosquitto_callback_thread(void *obj)
     return Qnil;
 }
 
+/*
+ * :nodoc:
+ *  On connect callback - invoked by libmosquitto.
+ *
+ */
 static void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
     mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
@@ -216,6 +290,11 @@ static void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq
     rb_mosquitto_queue_callback(callback);
 }
 
+/*
+ * :nodoc:
+ *  On disconnect callback - invoked by libmosquitto.
+ *
+ */
 static void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
     mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
@@ -229,6 +308,11 @@ static void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *m
     rb_mosquitto_queue_callback(callback);
 }
 
+/*
+ * :nodoc:
+ *  On publish callback - invoked by libmosquitto.
+ *
+ */
 static void rb_mosquitto_client_on_publish_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
     mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
@@ -242,6 +326,11 @@ static void rb_mosquitto_client_on_publish_cb(MOSQ_UNUSED struct mosquitto *mosq
     rb_mosquitto_queue_callback(callback);
 }
 
+/*
+ * :nodoc:
+ *  On message callback - invoked by libmosquitto.
+ *
+ */
 static void rb_mosquitto_client_on_message_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
     mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
@@ -249,13 +338,18 @@ static void rb_mosquitto_client_on_message_cb(MOSQ_UNUSED struct mosquitto *mosq
     callback->client = (mosquitto_client_wrapper *)obj;
 
     on_message_callback_args_t *args = MOSQ_ALLOC(on_message_callback_args_t);
-	args->msg = MOSQ_ALLOC(struct mosquitto_message);
-	mosquitto_message_copy(args->msg, msg);
+    args->msg = MOSQ_ALLOC(struct mosquitto_message);
+    mosquitto_message_copy(args->msg, msg);
 
     callback->data = (void *)args;
     rb_mosquitto_queue_callback(callback);
 }
 
+/*
+ * :nodoc:
+ *  On subscribe callback - invoked by libmosquitto.
+ *
+ */
 static void rb_mosquitto_client_on_subscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
     mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
@@ -271,6 +365,11 @@ static void rb_mosquitto_client_on_subscribe_cb(MOSQ_UNUSED struct mosquitto *mo
     rb_mosquitto_queue_callback(callback);
 }
 
+/*
+ * :nodoc:
+ *  On unsubscribe callback - invoked by libmosquitto.
+ *
+ */
 static void rb_mosquitto_client_on_unsubscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
     mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
@@ -284,6 +383,11 @@ static void rb_mosquitto_client_on_unsubscribe_cb(MOSQ_UNUSED struct mosquitto *
     rb_mosquitto_queue_callback(callback);
 }
 
+/*
+ * :nodoc:
+ *  On log callback - invoked by libmosquitto.
+ *
+ */
 static void rb_mosquitto_client_on_log_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int level, const char *str)
 {
     mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
@@ -298,6 +402,11 @@ static void rb_mosquitto_client_on_log_cb(MOSQ_UNUSED struct mosquitto *mosq, vo
     rb_mosquitto_queue_callback(callback); 
 }
 
+/*
+ * :nodoc:
+ *  GC callback for Mosquitto::Client objects - invoked during the GC mark phase.
+ *
+ */
 static void rb_mosquitto_mark_client(void *ptr)
 {
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)ptr;
@@ -313,6 +422,11 @@ static void rb_mosquitto_mark_client(void *ptr)
     }
 }
 
+/*
+ * :nodoc:
+ *  GC callback for releasing an out of scope Mosquitto::Client object
+ *
+ */
 static void rb_mosquitto_free_client(void *ptr)
 {
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)ptr;
@@ -1253,7 +1367,7 @@ void _init_rb_mosquitto_client()
 {
     rb_cMosquittoClient = rb_define_class_under(rb_mMosquitto, "Client", rb_cObject);
 
-    /* Init / setup */
+    /* Init / setup specific methods */
 
     rb_define_singleton_method(rb_cMosquittoClient, "new", rb_mosquitto_client_s_new, -1);
     rb_define_method(rb_cMosquittoClient, "reinitialise", rb_mosquitto_client_reinitialise, -1);
@@ -1261,7 +1375,7 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "will_clear", rb_mosquitto_client_will_clear, 0);
     rb_define_method(rb_cMosquittoClient, "auth", rb_mosquitto_client_auth, 2);
 
-    /* Network */
+    /* Network specific methods */
 
     rb_define_method(rb_cMosquittoClient, "connect", rb_mosquitto_client_connect, 3);
     rb_define_method(rb_cMosquittoClient, "connect_bind", rb_mosquitto_client_connect_bind, 4);
@@ -1270,13 +1384,13 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "reconnect", rb_mosquitto_client_reconnect, 0);
     rb_define_method(rb_cMosquittoClient, "disconnect", rb_mosquitto_client_disconnect, 0);
 
-    /* Messages */
+    /* Messaging specific methods */
 
     rb_define_method(rb_cMosquittoClient, "publish", rb_mosquitto_client_publish, 5);
     rb_define_method(rb_cMosquittoClient, "subscribe", rb_mosquitto_client_subscribe, 3);
     rb_define_method(rb_cMosquittoClient, "unsubscribe", rb_mosquitto_client_unsubscribe, 2);
 
-    /* Main / event loop specific */
+    /* Main / event loop specific methods */
 
     rb_define_method(rb_cMosquittoClient, "socket", rb_mosquitto_client_socket, 0);
     rb_define_method(rb_cMosquittoClient, "loop", rb_mosquitto_client_loop, 2);
@@ -1288,20 +1402,20 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "loop_misc", rb_mosquitto_client_loop_misc, 0);
     rb_define_method(rb_cMosquittoClient, "want_write?", rb_mosquitto_client_want_write, 0);
 
-    /* Tuning */
+    /* Tuning specific methods */
 
     rb_define_method(rb_cMosquittoClient, "reconnect_delay_set", rb_mosquitto_client_reconnect_delay_set, 3);
     rb_define_method(rb_cMosquittoClient, "max_inflight_messages=", rb_mosquitto_client_max_inflight_messages_equals, 1);
     rb_define_method(rb_cMosquittoClient, "message_retry=", rb_mosquitto_client_message_retry_equals, 1);
 
-    /* TLS */
+    /* TLS specific methods */
 
     rb_define_method(rb_cMosquittoClient, "tls_set", rb_mosquitto_client_tls_set, 4);
     rb_define_method(rb_cMosquittoClient, "tls_insecure=", rb_mosquitto_client_tls_insecure_set, 1);
     rb_define_method(rb_cMosquittoClient, "tls_opts_set", rb_mosquitto_client_tls_opts_set, 3);
     rb_define_method(rb_cMosquittoClient, "tls_psk_set", rb_mosquitto_client_tls_psk_set, 3);
 
-    /* Callbacks */
+    /* Callback specific methods */
 
     rb_define_method(rb_cMosquittoClient, "on_connect", rb_mosquitto_client_on_connect, -1);
     rb_define_method(rb_cMosquittoClient, "on_disconnect", rb_mosquitto_client_on_disconnect, -1);
