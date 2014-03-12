@@ -1142,6 +1142,7 @@ static VALUE rb_mosquitto_client_on_connect(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
+    if (!NIL_P(client->connect_cb)) rb_gc_unregister_address(&client->connect_cb);
     mosquitto_connect_callback_set(client->mosq, rb_mosquitto_client_on_connect_cb);
     client->connect_cb = cb;
     rb_gc_register_address(&client->connect_cb);
@@ -1154,6 +1155,7 @@ static VALUE rb_mosquitto_client_on_disconnect(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
+    if (!NIL_P(client->disconnect_cb)) rb_gc_unregister_address(&client->disconnect_cb);
     mosquitto_disconnect_callback_set(client->mosq, rb_mosquitto_client_on_disconnect_cb);
     client->disconnect_cb = cb;
     rb_gc_register_address(&client->disconnect_cb);
@@ -1166,6 +1168,7 @@ static VALUE rb_mosquitto_client_on_publish(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
+    if (!NIL_P(client->publish_cb)) rb_gc_unregister_address(&client->publish_cb);
     mosquitto_publish_callback_set(client->mosq, rb_mosquitto_client_on_publish_cb);
     client->publish_cb = cb;
     rb_gc_register_address(&client->publish_cb);
@@ -1178,6 +1181,7 @@ static VALUE rb_mosquitto_client_on_message(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
+    if (!NIL_P(client->message_cb)) rb_gc_unregister_address(&client->message_cb);
     mosquitto_message_callback_set(client->mosq, rb_mosquitto_client_on_message_cb);
     client->message_cb = cb;
     rb_gc_register_address(&client->message_cb);
@@ -1190,6 +1194,7 @@ static VALUE rb_mosquitto_client_on_subscribe(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 3);
+    if (!NIL_P(client->subscribe_cb)) rb_gc_unregister_address(&client->subscribe_cb);
     mosquitto_subscribe_callback_set(client->mosq, rb_mosquitto_client_on_subscribe_cb);
     client->subscribe_cb = cb;
     rb_gc_register_address(&client->subscribe_cb);
@@ -1202,6 +1207,7 @@ static VALUE rb_mosquitto_client_on_unsubscribe(int argc, VALUE *argv, VALUE obj
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 1);
+    if (!NIL_P(client->unsubscribe_cb)) rb_gc_unregister_address(&client->unsubscribe_cb);
     mosquitto_unsubscribe_callback_set(client->mosq, rb_mosquitto_client_on_unsubscribe_cb);
     client->unsubscribe_cb = cb;
     rb_gc_register_address(&client->unsubscribe_cb);
@@ -1214,6 +1220,7 @@ static VALUE rb_mosquitto_client_on_log(int argc, VALUE *argv, VALUE obj)
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
     MosquittoAssertCallback(cb, 2);
+    if (!NIL_P(client->log_cb)) rb_gc_unregister_address(&client->log_cb);
     mosquitto_log_callback_set(client->mosq, rb_mosquitto_client_on_log_cb);
     client->log_cb = cb;
     rb_gc_register_address(&client->log_cb);
