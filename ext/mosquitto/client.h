@@ -27,9 +27,57 @@ typedef struct {
           rb_raise(rb_eArgError, "Callback expects %d argument(s), got %d", arity, NUM2INT(rb_proc_arity(cb))); \
     }
 
+#define ON_CONNECT_CALLBACK 0x00
+#define ON_DISCONNECT_CALLBACK 0x01
+#define ON_PUBLISH_CALLBACK 0x02
+#define ON_MESSAGE_CALLBACK 0x04
+#define ON_SUBSCRIBE_CALLBACK 0x08
+#define ON_UNSUBSCRIBE_CALLBACK 0x10
+#define ON_LOG_CALLBACK 0x20
+
+typedef struct on_connect_callback_args_t on_connect_callback_args_t;
+struct on_connect_callback_args_t {
+    int rc;
+};
+
+typedef struct on_disconnect_callback_args_t on_disconnect_callback_args_t;
+struct on_disconnect_callback_args_t {
+    int rc;
+};
+
+typedef struct on_publish_callback_args_t on_publish_callback_args_t;
+struct on_publish_callback_args_t {
+    int mid;
+};
+
+typedef struct on_message_callback_args_t on_message_callback_args_t;
+struct on_message_callback_args_t {
+    struct mosquitto_message *msg;
+};
+
+typedef struct on_subscribe_callback_args_t on_subscribe_callback_args_t;
+struct on_subscribe_callback_args_t {
+    int mid;
+    int qos_count;
+    const int *granted_qos;
+};
+
+typedef struct on_unsubscribe_callback_args_t on_unsubscribe_callback_args_t;
+struct on_unsubscribe_callback_args_t {
+    int mid;
+};
+
+typedef struct on_log_callback_args_t on_log_callback_args_t;
+struct on_log_callback_args_t {
+    int level;
+    char *str;
+};
+
 typedef struct mosquitto_callback_t mosquitto_callback_t;
 struct mosquitto_callback_t {
-    VALUE data[5];
+    int type;
+    mosquitto_client_wrapper *client;
+    void *data;
     mosquitto_callback_t *next;
 };
 
@@ -44,7 +92,7 @@ struct nogvl_connect_args {
     char *host;
     int port;
     int keepalive;
-    char *bind_address
+    char *bind_address;
 };
 
 struct nogvl_loop_stop_args {

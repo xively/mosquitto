@@ -26,7 +26,7 @@ class TestThreads < MosquittoTestCase
   def test_pub_sub
     threads = []
     published = 0
-    messages = Queue.new
+    messages = []
     threads << Thread.new do
       publisher = Mosquitto::Client.new
       publisher.loop_start
@@ -59,8 +59,8 @@ class TestThreads < MosquittoTestCase
     end
 
     threads.each(&:join)
-    assert_equal 26, published
-    assert_equal 26, messages.size
-    assert_equal 'z', messages.pop
+    messages.uniq!
+    messages.sort!
+    assert_equal ('a'..'z').to_a, messages
   end
 end

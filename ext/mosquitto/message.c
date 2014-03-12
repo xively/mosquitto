@@ -13,28 +13,13 @@ VALUE rb_mosquitto_message_alloc(const struct mosquitto_message *msg)
 {
     VALUE message;
     mosquitto_message_wrapper *wrapper = NULL;
-    int ret;
     message = Data_Make_Struct(rb_cMosquittoMessage, mosquitto_message_wrapper, 0, rb_mosquitto_free_message, wrapper);
-    wrapper->msg = ALLOC(struct mosquitto_message);
-    ret = mosquitto_message_copy(wrapper->msg, msg);
-    switch (ret) {
-        case MOSQ_ERR_INVAL:
-            xfree(wrapper->msg);
-            xfree(wrapper);
-            MosquittoError("invalid input params");
-            break;
-        case MOSQ_ERR_NOMEM:
-            xfree(wrapper->msg);
-            xfree(wrapper);
-            rb_memerror();
-            break;
-        default:
-            rb_obj_call_init(message, 0, NULL);
-            return message;
-    }
+    wrapper->msg = msg;
+    rb_obj_call_init(message, 0, NULL);
+    return message;
 }
 
-VALUE rb_mosquitto_message_mid(VALUE obj)
+static VALUE rb_mosquitto_message_mid(VALUE obj)
 {
     struct mosquitto_message *msg;
     MosquittoGetMessage(obj);
@@ -42,7 +27,7 @@ VALUE rb_mosquitto_message_mid(VALUE obj)
     return INT2NUM(msg->mid);
 }
 
-VALUE rb_mosquitto_message_topic(VALUE obj)
+static VALUE rb_mosquitto_message_topic(VALUE obj)
 {
     struct mosquitto_message *msg;
     MosquittoGetMessage(obj);
@@ -50,7 +35,7 @@ VALUE rb_mosquitto_message_topic(VALUE obj)
     return rb_str_new2(msg->topic);
 }
 
-VALUE rb_mosquitto_message_to_s(VALUE obj)
+static VALUE rb_mosquitto_message_to_s(VALUE obj)
 {
     struct mosquitto_message *msg;
     MosquittoGetMessage(obj);
@@ -58,7 +43,7 @@ VALUE rb_mosquitto_message_to_s(VALUE obj)
     return rb_str_new(msg->payload, msg->payloadlen);
 }
 
-VALUE rb_mosquitto_message_length(VALUE obj)
+static VALUE rb_mosquitto_message_length(VALUE obj)
 {
     struct mosquitto_message *msg;
     MosquittoGetMessage(obj);
@@ -66,7 +51,7 @@ VALUE rb_mosquitto_message_length(VALUE obj)
     return INT2NUM(msg->payloadlen);
 }
 
-VALUE rb_mosquitto_message_qos(VALUE obj)
+static VALUE rb_mosquitto_message_qos(VALUE obj)
 {
     struct mosquitto_message *msg;
     MosquittoGetMessage(obj);
@@ -74,7 +59,7 @@ VALUE rb_mosquitto_message_qos(VALUE obj)
     return INT2NUM(msg->qos);
 }
 
-VALUE rb_mosquitto_message_retain_p(VALUE obj)
+static VALUE rb_mosquitto_message_retain_p(VALUE obj)
 {
     struct mosquitto_message *msg;
     MosquittoGetMessage(obj);
