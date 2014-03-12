@@ -9,10 +9,26 @@ VALUE intern_call;
 
 rb_encoding *binary_encoding;
 
+/*
+ *  call-seq:
+ *    Mosquitto.version -> Integer
+ *
+ *  The libmosquitto version linked against. It returns for libmosquitto 1.2.3 an integer as :
+ *
+ *  1002003
+ */
+
 static VALUE rb_mosquitto_version(MOSQ_UNUSED VALUE obj)
 {
     return INT2NUM(mosquitto_lib_version(NULL, NULL, NULL));
 }
+
+/*
+ *  call-seq:
+ *    Mosquitto.cleanup -> nil
+ *
+ *  Release resources associated with the libmosquitto library.
+ */
 
 static VALUE rb_mosquitto_cleanup(MOSQ_UNUSED VALUE obj)
 {
@@ -30,13 +46,17 @@ void Init_mosquitto_ext()
 
     rb_mMosquitto = rb_define_module("Mosquitto");
 
-    /* Message constants */
+    /*
+     * Message specific constants
+     */
 
     rb_define_const(rb_mMosquitto, "AT_MOST_ONCE", INT2NUM(0));
     rb_define_const(rb_mMosquitto, "AT_LEAST_ONCE", INT2NUM(1));
     rb_define_const(rb_mMosquitto, "EXACTLY_ONCE", INT2NUM(2));
 
-    /* Log constants */
+   /*
+    * Log specific constants *
+    */
 
     rb_define_const(rb_mMosquitto, "LOG_NONE", INT2NUM(0x00));
     rb_define_const(rb_mMosquitto, "LOG_INFO", INT2NUM(0x01));
@@ -48,7 +68,9 @@ void Init_mosquitto_ext()
     rb_define_const(rb_mMosquitto, "LOG_UNSUBSCRIBE", INT2NUM(0x40));
     rb_define_const(rb_mMosquitto, "LOG_ALL", INT2NUM(0xFFFF));
 
-    /* TLS constants */
+    /*
+     * TLS specific constants
+     */
 
     rb_define_const(rb_mMosquitto, "SSL_VERIFY_NONE", INT2NUM(0));
     rb_define_const(rb_mMosquitto, "SSL_VERIFY_PEER", INT2NUM(1));

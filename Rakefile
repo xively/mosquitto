@@ -10,6 +10,15 @@ require 'rake/extensiontask'
 require 'rake/testtask'
 require 'rdoc/task'
 
+
+RDOC_FILES = FileList["README.rdoc", "ext/mosquitto/mosquitto_ext.c", "ext/mosquitto/client.c", "ext/mosquitto/message.c"]
+
+Rake::RDocTask.new do |rd|
+  rd.main = "README.rdoc"
+  rd.rdoc_dir = "doc"
+  rd.rdoc_files.include(RDOC_FILES)
+end
+
 Rake::ExtensionTask.new('mosquitto') do |ext|
   ext.name = 'mosquitto_ext'
   ext.ext_dir = 'ext/mosquitto'
