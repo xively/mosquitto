@@ -30,6 +30,18 @@ VALUE rb_mosquitto_message_alloc(const struct mosquitto_message *msg)
     return message;
 }
 
+/*
+ *  call-seq:
+ *    msg.mid -> Integer
+ *
+ *  Message identifier for this message. Note that although the MQTT protocol doesn't use message ids
+ *  for messages with QoS=0, libmosquitto assigns them message ids so they can be tracked with this parameter.
+ *
+ * === Examples
+ *
+ *   msg.mid -> 2
+ *
+*/
 static VALUE rb_mosquitto_message_mid(VALUE obj)
 {
     struct mosquitto_message *msg;
@@ -38,6 +50,17 @@ static VALUE rb_mosquitto_message_mid(VALUE obj)
     return INT2NUM(msg->mid);
 }
 
+/*
+ *  call-seq:
+ *    msg.topic -> String
+ *
+ *  Topic this message was published on.
+ *
+ * === Examples
+ *
+ *   msg.topic -> "test"
+ *
+ */
 static VALUE rb_mosquitto_message_topic(VALUE obj)
 {
     struct mosquitto_message *msg;
@@ -46,6 +69,17 @@ static VALUE rb_mosquitto_message_topic(VALUE obj)
     return rb_str_new2(msg->topic);
 }
 
+/*
+ *  call-seq:
+ *    msg.to_s -> String
+ *
+ *  Coerces the Mosquitto::Message payload to a Ruby string.
+ *
+ * === Examples
+ *
+ *   msg.to_s -> "message"
+ *
+ */
 static VALUE rb_mosquitto_message_to_s(VALUE obj)
 {
     struct mosquitto_message *msg;
@@ -54,6 +88,17 @@ static VALUE rb_mosquitto_message_to_s(VALUE obj)
     return rb_str_new(msg->payload, msg->payloadlen);
 }
 
+/*
+ *  call-seq:
+ *    msg.length -> Integer
+ *
+ *  The length of the message payload
+ *
+ * === Examples
+ *
+ *   msg.length -> 7
+ *
+ */
 static VALUE rb_mosquitto_message_length(VALUE obj)
 {
     struct mosquitto_message *msg;
@@ -62,6 +107,23 @@ static VALUE rb_mosquitto_message_length(VALUE obj)
     return INT2NUM(msg->payloadlen);
 }
 
+/*
+ *  call-seq:
+ *    msg.qos -> Integer
+ *
+ *  Quality of Service used for the message
+ *
+ * === See
+ *
+ *  Mosquitto::AT_MOST_ONCE
+ *  Mosquitto::AT_LEAST_ONCE
+ *  Mosquitto::EXACTLY_ONCE
+ *
+ * === Examples
+ *
+ *   msg.qos -> Mosquitto::AT_MOST_ONCE
+ *
+ */
 static VALUE rb_mosquitto_message_qos(VALUE obj)
 {
     struct mosquitto_message *msg;
@@ -70,6 +132,17 @@ static VALUE rb_mosquitto_message_qos(VALUE obj)
     return INT2NUM(msg->qos);
 }
 
+/*
+ *  call-seq:
+ *    msg.retain? -> Boolean
+ *
+ *  Set to true if this message was flagged to retain.
+ *
+ * === Examples
+ *
+ *   msg.retain? -> true
+ *
+ */
 static VALUE rb_mosquitto_message_retain_p(VALUE obj)
 {
     struct mosquitto_message *msg;
@@ -77,6 +150,12 @@ static VALUE rb_mosquitto_message_retain_p(VALUE obj)
     msg = message->msg;
     return (msg->retain == true) ? Qtrue : Qfalse;
 }
+
+/*
+ *  Represents libmosquitto messages. They cannot be allocated or initialized from user code - they are
+ *  spawned exclusively from within on_message callbacks and are thus read-only wrapper objects.
+ *
+ */
 
 void _init_rb_mosquitto_message()
 {

@@ -53,7 +53,7 @@ void Init_mosquitto_ext()
     rb_mMosquitto = rb_define_module("Mosquitto");
 
     /*
-     * Message specific constants
+     * Message QOS specific constants
      */
     rb_define_const(rb_mMosquitto, "AT_MOST_ONCE", INT2NUM(0));
     rb_define_const(rb_mMosquitto, "AT_LEAST_ONCE", INT2NUM(1));
