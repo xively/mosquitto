@@ -193,11 +193,11 @@ static VALUE rb_mosquitto_callback_thread(void *unused)
 
 static void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
-    mosquitto_callback_t *callback = ALLOC(mosquitto_callback_t);
+    mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
     callback->type = ON_CONNECT_CALLBACK;
     callback->client = (mosquitto_client_wrapper *)obj;
 
-    on_connect_callback_args_t *args = ALLOC(on_connect_callback_args_t);
+    on_connect_callback_args_t *args = MOSQ_ALLOC(on_connect_callback_args_t);
     args->rc = rc;
 
     callback->data = (void *)args;
@@ -206,11 +206,11 @@ static void rb_mosquitto_client_on_connect_cb(MOSQ_UNUSED struct mosquitto *mosq
 
 static void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int rc)
 {
-    mosquitto_callback_t *callback = ALLOC(mosquitto_callback_t);
+    mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
     callback->type = ON_DISCONNECT_CALLBACK;
     callback->client = (mosquitto_client_wrapper *)obj;
 
-    on_disconnect_callback_args_t *args = ALLOC(on_disconnect_callback_args_t);
+    on_disconnect_callback_args_t *args = MOSQ_ALLOC(on_disconnect_callback_args_t);
     args->rc = rc;
 
     callback->data = (void *)args;
@@ -219,11 +219,11 @@ static void rb_mosquitto_client_on_disconnect_cb(MOSQ_UNUSED struct mosquitto *m
 
 static void rb_mosquitto_client_on_publish_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
-    mosquitto_callback_t *callback = ALLOC(mosquitto_callback_t);
+    mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
     callback->type = ON_PUBLISH_CALLBACK;
     callback->client = (mosquitto_client_wrapper *)obj;
 
-    on_publish_callback_args_t *args = ALLOC(on_publish_callback_args_t);
+    on_publish_callback_args_t *args = MOSQ_ALLOC(on_publish_callback_args_t);
     args->mid = mid;
 
     callback->data = (void *)args;
@@ -232,12 +232,12 @@ static void rb_mosquitto_client_on_publish_cb(MOSQ_UNUSED struct mosquitto *mosq
 
 static void rb_mosquitto_client_on_message_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
-    mosquitto_callback_t *callback = ALLOC(mosquitto_callback_t);
+    mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
     callback->type = ON_MESSAGE_CALLBACK;
     callback->client = (mosquitto_client_wrapper *)obj;
 
-    on_message_callback_args_t *args = ALLOC(on_message_callback_args_t);
-	args->msg = ALLOC(struct mosquitto_message);
+    on_message_callback_args_t *args = MOSQ_ALLOC(on_message_callback_args_t);
+	args->msg = MOSQ_ALLOC(struct mosquitto_message);
 	mosquitto_message_copy(args->msg, msg);
 
     callback->data = (void *)args;
@@ -246,11 +246,11 @@ static void rb_mosquitto_client_on_message_cb(MOSQ_UNUSED struct mosquitto *mosq
 
 static void rb_mosquitto_client_on_subscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
-    mosquitto_callback_t *callback = ALLOC(mosquitto_callback_t);
+    mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
     callback->type = ON_SUBSCRIBE_CALLBACK;
     callback->client = (mosquitto_client_wrapper *)obj;
 
-    on_subscribe_callback_args_t *args = ALLOC(on_subscribe_callback_args_t);
+    on_subscribe_callback_args_t *args = MOSQ_ALLOC(on_subscribe_callback_args_t);
     args->mid = mid;
     args->qos_count = qos_count;
     args->granted_qos = granted_qos;
@@ -261,11 +261,11 @@ static void rb_mosquitto_client_on_subscribe_cb(MOSQ_UNUSED struct mosquitto *mo
 
 static void rb_mosquitto_client_on_unsubscribe_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int mid)
 {
-    mosquitto_callback_t *callback = ALLOC(mosquitto_callback_t);
+    mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
     callback->type = ON_UNSUBSCRIBE_CALLBACK;
     callback->client = (mosquitto_client_wrapper *)obj;
 
-    on_unsubscribe_callback_args_t *args = ALLOC(on_unsubscribe_callback_args_t);
+    on_unsubscribe_callback_args_t *args = MOSQ_ALLOC(on_unsubscribe_callback_args_t);
     args->mid = mid;
 
     callback->data = (void *)args;
@@ -274,11 +274,11 @@ static void rb_mosquitto_client_on_unsubscribe_cb(MOSQ_UNUSED struct mosquitto *
 
 static void rb_mosquitto_client_on_log_cb(MOSQ_UNUSED struct mosquitto *mosq, void *obj, int level, const char *str)
 {
-    mosquitto_callback_t *callback = ALLOC(mosquitto_callback_t);
+    mosquitto_callback_t *callback = MOSQ_ALLOC(mosquitto_callback_t);
     callback->type = ON_LOG_CALLBACK;
     callback->client = (mosquitto_client_wrapper *)obj;
 
-    on_log_callback_args_t *args = ALLOC(on_log_callback_args_t);
+    on_log_callback_args_t *args = MOSQ_ALLOC(on_log_callback_args_t);
     args->level = level;
     args->str = strdup(str);
 
@@ -1144,6 +1144,7 @@ static VALUE rb_mosquitto_client_on_connect(int argc, VALUE *argv, VALUE obj)
     MosquittoAssertCallback(cb, 1);
     mosquitto_connect_callback_set(client->mosq, rb_mosquitto_client_on_connect_cb);
     client->connect_cb = cb;
+    rb_gc_register_address(&client->connect_cb);
     return Qtrue;
 }
 
@@ -1155,6 +1156,7 @@ static VALUE rb_mosquitto_client_on_disconnect(int argc, VALUE *argv, VALUE obj)
     MosquittoAssertCallback(cb, 1);
     mosquitto_disconnect_callback_set(client->mosq, rb_mosquitto_client_on_disconnect_cb);
     client->disconnect_cb = cb;
+    rb_gc_register_address(&client->disconnect_cb);
     return Qtrue;
 }
 
@@ -1166,6 +1168,7 @@ static VALUE rb_mosquitto_client_on_publish(int argc, VALUE *argv, VALUE obj)
     MosquittoAssertCallback(cb, 1);
     mosquitto_publish_callback_set(client->mosq, rb_mosquitto_client_on_publish_cb);
     client->publish_cb = cb;
+    rb_gc_register_address(&client->publish_cb);
     return Qtrue;
 }
 
@@ -1177,6 +1180,7 @@ static VALUE rb_mosquitto_client_on_message(int argc, VALUE *argv, VALUE obj)
     MosquittoAssertCallback(cb, 1);
     mosquitto_message_callback_set(client->mosq, rb_mosquitto_client_on_message_cb);
     client->message_cb = cb;
+    rb_gc_register_address(&client->message_cb);
     return Qtrue;
 }
 
@@ -1188,6 +1192,7 @@ static VALUE rb_mosquitto_client_on_subscribe(int argc, VALUE *argv, VALUE obj)
     MosquittoAssertCallback(cb, 3);
     mosquitto_subscribe_callback_set(client->mosq, rb_mosquitto_client_on_subscribe_cb);
     client->subscribe_cb = cb;
+    rb_gc_register_address(&client->subscribe_cb);
     return Qtrue;
 }
 
@@ -1199,6 +1204,7 @@ static VALUE rb_mosquitto_client_on_unsubscribe(int argc, VALUE *argv, VALUE obj
     MosquittoAssertCallback(cb, 1);
     mosquitto_unsubscribe_callback_set(client->mosq, rb_mosquitto_client_on_unsubscribe_cb);
     client->unsubscribe_cb = cb;
+    rb_gc_register_address(&client->unsubscribe_cb);
     return Qtrue;
 }
 
@@ -1210,6 +1216,7 @@ static VALUE rb_mosquitto_client_on_log(int argc, VALUE *argv, VALUE obj)
     MosquittoAssertCallback(cb, 2);
     mosquitto_log_callback_set(client->mosq, rb_mosquitto_client_on_log_cb);
     client->log_cb = cb;
+    rb_gc_register_address(&client->log_cb);
     return Qtrue;
 }
 

@@ -27,6 +27,10 @@ typedef struct {
           rb_raise(rb_eArgError, "Callback expects %d argument(s), got %d", arity, NUM2INT(rb_proc_arity(cb))); \
     }
 
+// TODO: xmalloc, the Ruby VM's preferred allocation method for managing memory pressure fails under GC stress when callbacks
+// fire on a non-Ruby thread ( mosquitto_loop_start )
+#define MOSQ_ALLOC(type) ((type*)malloc(sizeof(type)))
+
 #define ON_CONNECT_CALLBACK 0x00
 #define ON_DISCONNECT_CALLBACK 0x01
 #define ON_PUBLISH_CALLBACK 0x02
