@@ -10,6 +10,7 @@ typedef struct {
     VALUE subscribe_cb;
     VALUE unsubscribe_cb;
     VALUE log_cb;
+    bool threaded_loop;
 } mosquitto_client_wrapper;
 
 #define MosquittoGetClient(obj) \
