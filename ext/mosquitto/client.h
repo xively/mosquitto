@@ -1,6 +1,8 @@
 #ifndef MOSQUITTO_CLIENT_H
 #define MOSQUITTO_CLIENT_H
 
+typedef struct mosquitto_callback_t mosquitto_callback_t;
+
 typedef struct {
     struct mosquitto *mosq;
     VALUE connect_cb;
@@ -10,7 +12,11 @@ typedef struct {
     VALUE subscribe_cb;
     VALUE unsubscribe_cb;
     VALUE log_cb;
+    VALUE callback_thread;
     bool threaded_loop;
+    pthread_mutex_t callback_mutex;
+    pthread_cond_t callback_cond;
+    mosquitto_callback_t *callback_queue;
 } mosquitto_client_wrapper;
 
 #define MosquittoGetClient(obj) \
@@ -78,7 +84,6 @@ struct on_log_callback_args_t {
     char *str;
 };
 
-typedef struct mosquitto_callback_t mosquitto_callback_t;
 struct mosquitto_callback_t {
     int type;
     mosquitto_client_wrapper *client;
@@ -89,6 +94,7 @@ struct mosquitto_callback_t {
 typedef struct mosquitto_callback_waiting_t mosquitto_callback_waiting_t;
 struct mosquitto_callback_waiting_t {
     mosquitto_callback_t *callback;
+    mosquitto_client_wrapper *client;
     bool abort;
 };
 
