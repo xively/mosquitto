@@ -13,7 +13,6 @@ typedef struct {
     VALUE unsubscribe_cb;
     VALUE log_cb;
     VALUE callback_thread;
-    bool threaded_loop;
     pthread_mutex_t callback_mutex;
     pthread_cond_t callback_cond;
     mosquitto_callback_t *callback_queue;

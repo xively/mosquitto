@@ -49,7 +49,7 @@ static void mosquitto_stop_waiting_for_callbacks(void *w)
 static void rb_mosquitto_queue_callback(mosquitto_callback_t *callback)
 {
     mosquitto_client_wrapper *client = callback->client;
-    if (client->threaded_loop == true) {
+    if (!NIL_P(client->callback_thread)) {
         pthread_mutex_lock(&client->callback_mutex);
         mosquitto_callback_queue_push(callback);
         pthread_mutex_unlock(&client->callback_mutex);
@@ -357,7 +357,7 @@ static VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
     cl->subscribe_cb = Qnil;
     cl->unsubscribe_cb = Qnil;
     cl->log_cb = Qnil;
-    cl->threaded_loop = false;
+    cl->callback_thread = Qnil;
     cl->callback_queue = NULL;
     rb_obj_call_init(client, 0, NULL);
     return client;
@@ -960,7 +960,7 @@ static VALUE rb_mosquitto_client_loop_start(VALUE obj)
     struct timeval time;
     MosquittoGetClient(obj);
     /* Let's not spawn duplicate threaded loops */
-    if (client->threaded_loop == true) return Qtrue;
+    if (!NIL_P(client->callback_thread)) return Qtrue;
     ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_start_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -970,7 +970,6 @@ static VALUE rb_mosquitto_client_loop_start(VALUE obj)
            MosquittoError("thread support is not available");
            break;
        default:
-           client->threaded_loop = true;
            pthread_mutex_init(&client->callback_mutex, NULL);
            pthread_cond_init(&client->callback_cond, NULL);
            client->callback_thread = rb_thread_create(rb_mosquitto_callback_thread, client);
@@ -1004,7 +1003,6 @@ static VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
            MosquittoError("thread support is not available");
            break;
        default:
-           client->threaded_loop = false;
            pthread_mutex_destroy(&client->callback_mutex);
            pthread_cond_destroy(&client->callback_cond);
            rb_thread_kill(client->callback_thread);
