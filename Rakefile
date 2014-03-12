@@ -3,13 +3,9 @@
 require 'rubygems' unless defined?(Gem)
 require 'rake' unless defined?(Rake)
 
-# Prefer compiled Rubinius bytecode in .rbx/
-ENV["RBXOPT"] = "-Xrbc.db"
-
 require 'rake/extensiontask'
 require 'rake/testtask'
 require 'rdoc/task'
-
 
 RDOC_FILES = FileList["README.rdoc", "ext/mosquitto/mosquitto_ext.c", "ext/mosquitto/client.c", "ext/mosquitto/message.c"]
 
@@ -37,11 +33,6 @@ namespace :debug do
   task :gdb do
     system "gdb --args ruby rake"
   end
-end
-
-desc 'Clobber Rubinius .rbc files'
-task :clobber_rbc do
-  sh 'find . -name *.rbc -print0 | xargs -0 rm'
 end
 
 task :test => :compile
