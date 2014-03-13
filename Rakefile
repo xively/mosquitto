@@ -8,7 +8,7 @@ require 'rake/testtask'
 require 'yard'
 
 YARD::Rake::YardocTask.new do |t|
-  t.files   = ['README.rdoc', 'lib/**/*.rb', "ext/mosquitto/*.c"]
+  t.files   = ['README.md', 'lib/**/*.rb', "ext/mosquitto/*.c"]
 end
 
 Rake::ExtensionTask.new('mosquitto') do |ext|
