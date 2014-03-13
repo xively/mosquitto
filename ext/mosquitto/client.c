@@ -556,6 +556,24 @@ static VALUE rb_mosquitto_client_reinitialise(int argc, VALUE *argv, VALUE obj)
     }
 }
 
+/*
+ * call-seq:
+ *   client.will_set("topic", "died", Mosquitto::AT_MOST_ONCE, false) -> Mosquitto::Client
+ *
+ * Configure will information for a mosquitto instance. By default, clients do not have a will.
+ *
+ * @param topic [String] the topic on which to publish the will
+ * @param payload [String] the message payload. Max 256MB
+ * @param qos [Mosquitto::AT_MOST_ONCE, Mosquitto::AT_LEAST_ONCE, Mosquitto::EXACTLY_ONCE] quality
+ *            of service used for the will
+ * @param retain [true, false] set to true to make the will a retained message
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params or a too large payload size
+ * @note This must be called before calling Mosquitto::Client#connect
+ * @example
+ *   client.will_set("will_set", "test", Mosquitto::AT_MOST_ONCE, true)
+ *
+ */
 static VALUE rb_mosquitto_client_will_set(VALUE obj, VALUE topic, VALUE payload, VALUE qos, VALUE retain)
 {
     int ret;
@@ -579,6 +597,19 @@ static VALUE rb_mosquitto_client_will_set(VALUE obj, VALUE topic, VALUE payload,
     }
 }
 
+/*
+ * call-seq:
+ *   client.will_clear -> Boolean
+ *
+ * Remove a previously configured will.
+ *
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params
+ * @note This must be called before calling Mosquitto::Client#connect
+ * @example
+ *   client.will_clear
+ *
+ */
 static VALUE rb_mosquitto_client_will_clear(VALUE obj)
 {
     int ret;
@@ -593,19 +624,30 @@ static VALUE rb_mosquitto_client_will_clear(VALUE obj)
     }
 }
 
+/*
+ * call-seq:
+ *   client.auth("username", "password") -> Boolean
+ *
+ * Configure username and password for a mosquitto instance. This is only supported by brokers that
+ * implement the MQTT spec v3.1. By default, no username or password will be sent.
+ *
+ * @param username [String] the username to send, or nil to disable authentication.
+ * @param password [String] the password to send. Set to nil when username is valid in order to send
+ *                          just a username.
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params
+ * @note This must be called before calling Mosquitto::Client#connect
+ * @example
+ *   client.auth("username", "password")
+ *
+ */
 static VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
 {
     int ret;
-    const char* passw;
     MosquittoGetClient(obj);
-    Check_Type(username, T_STRING);
-    if(!NIL_P(password)) {
-        Check_Type(password, T_STRING);
-        passw = StringValueCStr(password);
-    } else {
-        passw = NULL;
-    }
-    ret = mosquitto_username_pw_set(client->mosq, StringValueCStr(username), passw);
+    if (!NIL_P(username)) Check_Type(username, T_STRING);
+    if (!NIL_P(password)) Check_Type(password, T_STRING);
+    ret = mosquitto_username_pw_set(client->mosq, (NIL_P(username) ? NULL : StringValueCStr(username)), (NIL_P(password) ? NULL : StringValueCStr(password)));
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -618,6 +660,36 @@ static VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
     }
 }
 
+/*
+ * call-seq:
+ *   client.tls_set('/certs/all-ca.crt'), '/certs', '/certs/client.crt'), '/certs/client.key') -> Boolean
+ *
+ * Configure the client for certificate based SSL/TLS support.
+ * 
+ * Cannot be used in conjunction with Mosquitto::Client#tls_psk_set.
+ *
+ * Define the Certificate Authority certificates to be trusted (ie. the server
+ * certificate must be signed with one of these certificates) using cafile.
+ *
+ * If the server you are connecting to requires clients to provide a
+ * certificate, define certfile and keyfile with your client certificate and
+ * private key
+ *
+ * @param cafile [String] path to a file containing the PEM encoded trusted CA certificate files.
+ *                        Either cafile or capath must not be nil.
+ * @param capath [String] path to a directory containing the PEM encoded trusted CA certificate files.
+ *                        Either cafile or capath must not be nil.
+ * @param certfile [String] path to a file containing the PEM encoded certificate file for this client.
+ *                          If nil, keyfile must also be nil and no client certificate will be used.
+ * @param keyfile [String] path to a file containing the PEM encoded private key for this client. If nil,
+ *                         certfile must also be NULL and no client certificate will be used.
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params or when TLS is not supported
+ * @note This must be called before calling Mosquitto::Client#connect
+ * @example
+ *   client.tls_set('/certs/all-ca.crt'), '/certs', '/certs/client.crt'), '/certs/client.key')
+ *
+ */
 static VALUE rb_mosquitto_client_tls_set(VALUE obj, VALUE cafile, VALUE capath, VALUE certfile, VALUE keyfile)
 {
     int ret;
@@ -646,6 +718,28 @@ static VALUE rb_mosquitto_client_tls_set(VALUE obj, VALUE cafile, VALUE capath, 
     }
 }
 
+/*
+ * call-seq:
+ *   client.insecure = true -> Boolean
+ *
+ * Configure verification of the server hostname in the server certificate. If
+ * value is set to true, it is impossible to guarantee that the host you are
+ * connecting to is not impersonating your server. This can be useful in
+ * initial server testing, but makes it possible for a malicious third party to
+ * impersonate your server through DNS spoofing, for example.
+ * Do not use this function in a real system. Setting value to true makes the
+ * connection encryption pointless.
+ *
+ * @param insecure [true, false] if set to false, the default, certificate hostname checking is
+ *                               performed. If set to true, no hostname checking is performed and
+ *                               the connection is insecure.
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params or when TLS is not supported
+ * @note This must be called before calling Mosquitto::Client#connect
+ * @example
+ *   client.insecure = true
+ *
+ */
 static VALUE rb_mosquitto_client_tls_insecure_set(VALUE obj, VALUE insecure)
 {
     int ret;
@@ -666,6 +760,27 @@ static VALUE rb_mosquitto_client_tls_insecure_set(VALUE obj, VALUE insecure)
     }
 }
 
+/*
+ * call-seq:
+ *   client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil) -> Boolean
+ *
+ * Set advanced SSL/TLS options.
+ *
+ * @param cert_reqs [Mosquitto::SSL_VERIFY_NONE, Mosquitto::SSL_VERIFY_NONE] an integer defining the verification
+ *                  requirements the client will impose on the server. The default and recommended value is
+ *                  Mosquitto::SSL_VERIFY_PEER. Using Mosquitto::SSL_VERIFY_NONE provides no security.
+ * @param tls_version ["tlsv1.2", "tlsv1.1", "tlsv1"] the version of the SSL/TLS protocol to use as a string. If
+                                                      nil, the default value is used.
+ * @param ciphers [String] a string describing the ciphers available for use. See the `openssl ciphers` tool for
+                  more information. If nil, the default ciphers will be used.
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params or when TLS is not supported
+ * @note This must be called before calling Mosquitto::Client#connect
+ * @see `openssl ciphers`
+ * @example
+ *   client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil)
+ *
+ */
 static VALUE rb_mosquitto_client_tls_opts_set(VALUE obj, VALUE cert_reqs, VALUE tls_version, VALUE ciphers)
 {
     int ret;
@@ -693,6 +808,25 @@ static VALUE rb_mosquitto_client_tls_opts_set(VALUE obj, VALUE cert_reqs, VALUE 
     }
 }
 
+/*
+ * call-seq:
+ *   client.tls_psk_set("deadbeef", "psk-id", nil) -> Boolean
+ *
+ * Configure the client for pre-shared-key based TLS support.
+ *
+ * @param psk [String] the pre-shared-key in hex format with no leading "0x".
+ * @param identity [String] the identity of this client. May be used as the username depending on the server
+ *                          settings.
+ * @param ciphers [String] a string describing the ciphers available for use. See the `openssl ciphers` tool for
+                  more information. If nil, the default ciphers will be used.
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params or when TLS is not supported
+ * @note This must be called before calling Mosquitto::Client#connect
+ * @see `openssl ciphers`
+ * @example
+ *   client.tls_psk_set("deadbeef", "psk-id", nil)
+ *
+ */
 static VALUE rb_mosquitto_client_tls_psk_set(VALUE obj, VALUE psk, VALUE identity, VALUE ciphers)
 {
     int ret;

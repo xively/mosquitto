@@ -17,6 +17,7 @@ class TestTls < MosquittoTestCase
     assert_raises TypeError do
       client.tls_set(ssl_object('all-ca.crt'), ssl_path, ssl_object('client.crt'), :invalid)
     end
+    client.tls_set(ssl_object('all-ca.crt'), ssl_path, ssl_object('client.crt'), :invalid)
   end
 
   def test_connect
