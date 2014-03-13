@@ -869,7 +869,7 @@ static void *rb_mosquitto_client_connect_nogvl(void *ptr)
  * @return [true] on success
  * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
  * @example
- *   client.connect("localhost", 1883, 10) -> Boolean
+ *   client.connect("localhost", 1883, 10)
  *
  */
 static VALUE rb_mosquitto_client_connect(VALUE obj, VALUE host, VALUE port, VALUE keepalive)
@@ -918,7 +918,7 @@ static void *rb_mosquitto_client_connect_bind_nogvl(void *ptr)
  * @return [true] on success
  * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
  * @example
- *   client.connect_bind("localhost", 1883, 10, "10.0.0.3") -> Boolean
+ *   client.connect_bind("localhost", 1883, 10, "10.0.0.3")
  *
  */
 static VALUE rb_mosquitto_client_connect_bind(VALUE obj, VALUE host, VALUE port, VALUE keepalive, VALUE bind_address)
@@ -970,7 +970,7 @@ static void *rb_mosquitto_client_connect_async_nogvl(void *ptr)
  * @return [true] on success
  * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
  * @example
- *   client.connect_async("localhost", 1883, 10) -> Boolean
+ *   client.connect_async("localhost", 1883, 10)
  *
  */
 static VALUE rb_mosquitto_client_connect_async(VALUE obj, VALUE host, VALUE port, VALUE keepalive)
@@ -1025,7 +1025,7 @@ static void *rb_mosquitto_client_connect_bind_async_nogvl(void *ptr)
  * @return [true] on success
  * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
  * @example
- *   client.connect_bind_async("localhost", 1883, 10, "10.0.0.3") -> Boolean
+ *   client.connect_bind_async("localhost", 1883, 10, "10.0.0.3")
  *
  */
 static VALUE rb_mosquitto_client_connect_bind_async(VALUE obj, VALUE host, VALUE port, VALUE keepalive, VALUE bind_address)
@@ -1133,6 +1133,26 @@ static void *rb_mosquitto_client_publish_nogvl(void *ptr)
     return (VALUE)mosquitto_publish(args->mosq, args->mid, args->topic, args->payloadlen, args->payload, args->qos, args->retain);
 }
 
+/*
+ * call-seq:
+ *   client.publish(3, "publish", "test", Mosquitto::AT_MOST_ONCE, true) -> Boolean
+ *
+ * Publish a message on a given topic.
+ *
+ * @param mid [Integer, nil] If not nil, the function will set this to the message id of this particular message.
+ *                           This can be then used with the publish callback to determine when the message has been
+ *                           sent. Note that although the MQTT protocol doesn't use message ids for messages with
+ *                           QoS=0, libmosquitto assigns them message ids so they can be tracked with this parameter.
+ * @param payload [String] Message payload to send. Max 256MB
+ * @param qos [Mosquitto::AT_MOST_ONCE, Mosquitto::AT_LEAST_ONCE, Mosquitto::EXACTLY_ONCE] Quality of Service to be
+ *            used for the message.
+ * @param retain [true, false] set to true to make the message retained
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.publish(3, "publish", "test", Mosquitto::AT_MOST_ONCE, true)
+ *
+ */
 static VALUE rb_mosquitto_client_publish(VALUE obj, VALUE mid, VALUE topic, VALUE payload, VALUE qos, VALUE retain)
 {
     struct nogvl_publish_args args;
@@ -1180,6 +1200,24 @@ static void *rb_mosquitto_client_subscribe_nogvl(void *ptr)
     return (VALUE)mosquitto_subscribe(args->mosq, args->mid, args->subscription, args->qos);
 }
 
+/*
+ * call-seq:
+ *   client.subscribe(3, "subscribe", Mosquitto::AT_MOST_ONCE) -> Boolean
+ *
+ * Subscribe to a topic.
+ *
+ * @param mid [Integer, nil] If not nil, the function will set this to the message id of this particular message.
+ *                           This can be then used with the subscribe callback to determine when the message has been
+ *                           sent.
+ * @param subscription [String] The subscription pattern
+ * @param qos [Mosquitto::AT_MOST_ONCE, Mosquitto::AT_LEAST_ONCE, Mosquitto::EXACTLY_ONCE] Quality of Service to be
+ *            used for the subscription
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.subscribe(3, "subscribe", Mosquitto::AT_MOST_ONCE)
+ *
+ */
 static VALUE rb_mosquitto_client_subscribe(VALUE obj, VALUE mid, VALUE subscription, VALUE qos)
 {
     struct nogvl_subscribe_args args;
@@ -1217,6 +1255,22 @@ static void *rb_mosquitto_client_unsubscribe_nogvl(void *ptr)
     return (VALUE)mosquitto_unsubscribe(args->mosq, args->mid, args->subscription);
 }
 
+/*
+ * call-seq:
+ *   client.unsubscribe(3, "unsubscribe") -> Boolean
+ *
+ * Unsubscribe from a topic.
+ *
+ * @param mid [Integer, nil] If not nil, the function will set this to the message id of this particular message.
+ *                           This can be then used with the unsubscribe callback to determine when the message has been
+ *                           sent.
+ * @param subscription [String] the unsubscription pattern.
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.unsubscribe(3, "unsubscribe")
+ *
+ */
 static VALUE rb_mosquitto_client_unsubscribe(VALUE obj, VALUE mid, VALUE subscription)
 {
     struct nogvl_subscribe_args args;
@@ -1246,6 +1300,18 @@ static VALUE rb_mosquitto_client_unsubscribe(VALUE obj, VALUE mid, VALUE subscri
     }
 }
 
+/*
+ * call-seq:
+ *   client.socket -> Integer
+ *
+ * Return the socket handle for a mosquitto instance. Useful if you want to include a mosquitto client in your own
+ * select() calls.
+ *
+ * @return [Integer] socket identifier, or -1 on failure
+ * @example
+ *   client.socket
+ *
+ */
 static VALUE rb_mosquitto_client_socket(VALUE obj)
 {
     int socket;
@@ -1260,6 +1326,36 @@ static void *rb_mosquitto_client_loop_nogvl(void *ptr)
     return (VALUE)mosquitto_loop(args->mosq, args->timeout, args->max_packets);
 }
 
+/*
+ * call-seq:
+ *   client.loop(10, 10) -> Boolean
+ *
+ * The main network loop for the client. You must call this frequently in order
+ * to keep communications between the client and broker working. If incoming
+ * data is present it will then be processed. Outgoing commands, from e.g.
+ * Mosquitto::Client#publish, are normally sent immediately that their function is
+ * called, but this is not always possible. Mosquitto::Client#loop will also attempt
+ * to send any remaining outgoing messages, which also includes commands that
+ * are part of the flow for messages with QoS>0.
+ *
+ * An alternative approach is to use Mosquitto::Client#loop_start to run the client
+ * loop in its own thread.
+ *
+ * This calls select() to monitor the client network socket. If you want to
+ * integrate mosquitto client operation with your own select() call, use
+ * Mosquitto::Client#socket, Mosquitto::Client#loop_read, Mosquitto::Client#loop_write and
+ * Mosquitto::Client#loop_misc.
+ *
+ * @param timeout [Integer] Maximum number of milliseconds to wait for network activity in the select()
+ *                          call before timing out. Set to 0 for instant return.  Set negative to use the
+ *                          default of 1000ms
+ * @param max_packets [Integer] this parameter is currently unused and should be set to 1 for future compatibility.
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.loop(10, 10)
+ *
+ */
 static VALUE rb_mosquitto_client_loop(VALUE obj, VALUE timeout, VALUE max_packets)
 {
     struct nogvl_loop_args args;
@@ -1307,6 +1403,26 @@ static void rb_mosquitto_client_loop_forever_ubf(void *ptr)
     mosquitto_disconnect(client->mosq);
 }
 
+/*
+ * call-seq:
+ *   client.loop_forever(10, 1) -> Boolean
+ *
+ * This function calls Mosquitto::Client#loop for you in an infinite blocking loop. It is useful
+ * for the case where you only want to run the MQTT client loop in your program.
+ *
+ * It handles reconnecting in case server connection is lost. If you call Mosquitto::Client#disconnect in
+ * a callback it will return.
+ *
+ * @param timeout [Integer] Maximum number of milliseconds to wait for network activity in the select()
+ *                          call before timing out. Set to 0 for instant return.  Set negative to use the
+ *                          default of 1000ms
+ * @param max_packets [Integer] this parameter is currently unused and should be set to 1 for future compatibility.
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.loop_forever(10, 1)
+ *
+ */
 static VALUE rb_mosquitto_client_loop_forever(VALUE obj, VALUE timeout, VALUE max_packets)
 {
     struct nogvl_loop_args args;
@@ -1347,6 +1463,20 @@ static void *rb_mosquitto_client_loop_start_nogvl(void *ptr)
     return (VALUE)mosquitto_loop_start((struct mosquitto *)ptr);
 }
 
+/*
+ * call-seq:
+ *   client.loop_start -> Boolean
+ *
+ * This is part of the threaded client interface. Call this once to start a new
+ * thread to process network traffic. This provides an alternative to repeatedly calling
+ * Mosquitto::Client#loop yourself.
+ *
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params or if thread support is not available
+ * @example
+ *   client.loop_start
+ *
+ */
 static VALUE rb_mosquitto_client_loop_start(VALUE obj)
 {
     int ret;
@@ -1380,6 +1510,24 @@ static void *rb_mosquitto_client_loop_stop_nogvl(void *ptr)
     return (VALUE)mosquitto_loop_stop(args->mosq, args->force);
 }
 
+/*
+ * call-seq:
+ *   client.loop_start -> Boolean
+ *
+ * This is part of the threaded client interface. Call this once to stop the
+ * network thread previously created with Mosquitto::Client#loop_start. This call
+ * will block until the network thread finishes. For the network thread to end,
+ * you must have previously called Mosquitto::Client#disconnect or have set the force
+ * parameter to true.
+ *
+ * @param force [Boolean] set to true to force thread cancellation. If false, Mosquitto::Client#disconnect
+ *                        must have already been called.
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params or if thread support is not available
+ * @example
+ *   client.loop_start
+ *
+ */
 static VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
 {
     struct nogvl_loop_stop_args args;
@@ -1410,6 +1558,21 @@ static void *rb_mosquitto_client_loop_read_nogvl(void *ptr)
     return (VALUE)mosquitto_loop_read(args->mosq, args->max_packets);
 }
 
+/*
+ * call-seq:
+ *   client.loop_read(10) -> Boolean
+ *
+ * Carry out network read operations. This should only be used if you are not using Mosquitto::Client#loop and
+ * are monitoring the client network socket for activity yourself.
+ *
+ * @param max_packets [Integer] this parameter is currently unused and should be set to 1 for
+ *                              future compatibility.
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.loop_read(10)
+ *
+ */
 static VALUE rb_mosquitto_client_loop_read(VALUE obj, VALUE max_packets)
 {
     struct nogvl_loop_args args;
@@ -1449,6 +1612,21 @@ static void *rb_mosquitto_client_loop_write_nogvl(void *ptr)
     return (VALUE)mosquitto_loop_write(args->mosq, args->max_packets);
 }
 
+/*
+ * call-seq:
+ *   client.loop_write(1) -> Boolean
+ *
+ * Carry out network write operations. This should only be used if you are not using Mosquitto::Client#loop and
+ * are monitoring the client network socket for activity yourself.
+ *
+ * @param max_packets [Integer] this parameter is currently unused and should be set to 1 for
+ *                              future compatibility.
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.loop_write(1)
+ *
+ */
 static VALUE rb_mosquitto_client_loop_write(VALUE obj, VALUE max_packets)
 {
     struct nogvl_loop_args args;
@@ -1487,6 +1665,23 @@ static void *rb_mosquitto_client_loop_misc_nogvl(void *ptr)
     return (VALUE)mosquitto_loop_misc((struct mosquitto *)ptr);
 }
 
+/*
+ * call-seq:
+ *   client.loop_misc -> Boolean
+ *
+ * Carry out miscellaneous operations required as part of the network loop.
+ * This should only be used if you are not using Mosquitto::Client#loop and are
+ * monitoring the client network socket for activity yourself.
+ *
+ * This function deals with handling PINGs and checking whether messages need
+ * to be retried, so should be called fairly frequently.
+ *
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params or when not connected to the broker
+ * @example
+ *   client.loop_misc
+ *
+ */
 static VALUE rb_mosquitto_client_loop_misc(VALUE obj)
 {
     int ret;
@@ -1504,6 +1699,17 @@ static VALUE rb_mosquitto_client_loop_misc(VALUE obj)
     }
 }
 
+/*
+ * call-seq:
+ *   client.want_write? -> Boolean
+ *
+ * Returns true if there is data ready to be written on the socket.
+ *
+ * @return [true, false] true if there is data ready to be written on the socket
+ * @example
+ *   client.want_write
+ *
+ */
 static VALUE rb_mosquitto_client_want_write(VALUE obj)
 {
     bool ret;
@@ -1512,6 +1718,38 @@ static VALUE rb_mosquitto_client_want_write(VALUE obj)
     return (ret == true) ? Qtrue : Qfalse;
 }
 
+/*
+ * call-seq:
+ *   client.reconnect_delay_set(2, 10, true) -> Boolean
+ *
+ * Control the behaviour of the client when it has unexpectedly disconnected in
+ * Mosquitto::Client#loop_forever or after Mosquitto::Client#loop_start. The default
+ * behaviour if this function is not used is to repeatedly attempt to reconnect
+ * with a delay of 1 second until the connection succeeds.
+ *
+ * Use reconnect_delay parameter to change the delay between successive
+ * reconnection attempts. You may also enable exponential backoff of the time
+ * between reconnections by setting reconnect_exponential_backoff to true and
+ * set an upper bound on the delay with reconnect_delay_max.
+ *
+ * Example 1:
+ *	delay=2, delay_max=10, exponential_backoff=False
+ *	Delays would be: 2, 4, 6, 8, 10, 10, ...
+ *
+ * Example 2:
+ *	delay=3, delay_max=30, exponential_backoff=True
+ *	Delays would be: 3, 6, 12, 24, 30, 30, ...
+ *
+ * @param delay [Integer] the number of seconds to wait between reconnects
+ * @param delay_max [Integer] the maximum number of seconds to wait between reconnects
+ * @param exponential_backoff [true, false] use exponential backoff between reconnect attempts.
+                                        Set to true to enable exponential backoff.
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params
+ * @example
+ *   client.reconnect_delay_set(2, 10, true)
+ *
+ */
 static VALUE rb_mosquitto_client_reconnect_delay_set(VALUE obj, VALUE delay, VALUE delay_max, VALUE exp_backoff)
 {
     int ret;
@@ -1528,6 +1766,28 @@ static VALUE rb_mosquitto_client_reconnect_delay_set(VALUE obj, VALUE delay, VAL
     }
 }
 
+/*
+ * call-seq:
+ *   client.max_inflight_messages = 10 -> Boolean
+ *
+ * Set the number of QoS 1 and 2 messages that can be "in flight" at one time.
+ * An in flight message is part way through its delivery flow. Attempts to send
+ * further messages with mosquitto::Client#publish will result in the messages being
+ * queued until the number of in flight messages reduces.
+ *
+ * A higher number here results in greater message throughput, but if set
+ * higher than the maximum in flight messages on the broker may lead to
+ * delays in the messages being acknowledged.
+ *
+ * Set to 0 for no maximum.
+ *
+ * @param max_messages [Integer] the maximum number of inflight messages. Defaults to 20.
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params
+ * @example
+ *   client.max_inflight_messages = 10
+ *
+ */
 static VALUE rb_mosquitto_client_max_inflight_messages_equals(VALUE obj, VALUE max_messages)
 {
     int ret;
@@ -1543,6 +1803,20 @@ static VALUE rb_mosquitto_client_max_inflight_messages_equals(VALUE obj, VALUE m
     }
 }
 
+/*
+ * call-seq:
+ *   client.message_retry = 10 -> Boolean
+ *
+ * Set the number of seconds to wait before retrying messages. This applies to
+ * publish messages with QoS>0. May be called at any time.
+ *
+ * @param message_retry [Integer] the number of seconds to wait for a response before retrying. Defaults to 20.
+ * @return [true] on success
+ * @raise [Mosquitto::Error] on invalid input params
+ * @example
+ *   client.message_retry = 10
+ *
+ */
 static VALUE rb_mosquitto_client_message_retry_equals(VALUE obj, VALUE seconds)
 {
     MosquittoGetClient(obj);

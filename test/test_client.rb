@@ -125,6 +125,7 @@ class TestClient < MosquittoTestCase
       client.publish(nil, :invalid, "test", Mosquitto::AT_MOST_ONCE, true)
     end
     assert client.publish(nil, "publish", "test", Mosquitto::AT_MOST_ONCE, true)
+    assert client.publish(3, "publish", "test", Mosquitto::AT_MOST_ONCE, true)
   end
 
   def test_subscribe
@@ -137,6 +138,7 @@ class TestClient < MosquittoTestCase
       client.subscribe(nil, :topic, Mosquitto::AT_MOST_ONCE)
     end
     assert client.subscribe(nil, "subscribe", Mosquitto::AT_MOST_ONCE)
+    assert client.subscribe(3, "subscribe", Mosquitto::AT_MOST_ONCE)
   end
 
   def test_unsubscribe
@@ -149,6 +151,7 @@ class TestClient < MosquittoTestCase
       client.unsubscribe(nil, :topic)
     end
     assert client.unsubscribe(nil, "unsubscribe")
+    assert client.unsubscribe(3, "unsubscribe")
   end
 
   def test_subscribe_unsubscribe
@@ -209,7 +212,7 @@ class TestClient < MosquittoTestCase
     assert client.loop_stop(true)
   end
 
-  def test_want_write
+  def test_want_write_p
     client = Mosquitto::Client.new
     assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert !client.want_write?
@@ -306,7 +309,7 @@ class TestClient < MosquittoTestCase
     assert_equal "test", message.to_s
   end
 
-  def test_reconnect_delay
+  def test_reconnect_delay_set
     client = Mosquitto::Client.new
     assert_raises TypeError do
       client.reconnect_delay_set(:invalid, 10, true)
