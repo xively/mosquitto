@@ -261,8 +261,9 @@ class TestClient < MosquittoTestCase
     unsubscribed = false
     client = Mosquitto::Client.new
     assert client.loop_start
-    client.on_subscribe do |mid,qos_count,granted_qos|
+    client.on_subscribe do |mid,granted_qos|
       subscribed = true
+      p granted_qos
       msg_id = mid
     end
     client.on_unsubscribe do |mid|

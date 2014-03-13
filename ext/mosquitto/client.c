@@ -203,12 +203,16 @@ static void rb_mosquitto_handle_callback(int *error_tag, mosquitto_callback_t *c
                                   break;
 
         case ON_SUBSCRIBE_CALLBACK: {
+                                      int i;
                                       on_subscribe_callback_args_t *cb = (on_subscribe_callback_args_t *)callback->data;
+                                      VALUE granted_qos = rb_ary_new2(cb->qos_count);
+                                      for (i = 0; i < cb->qos_count; i++) {
+                                          rb_ary_push(granted_qos, INT2NUM(cb->granted_qos[i]));
+                                      }
                                       args[0] = client->subscribe_cb;
-                                      args[1] = (VALUE)3;
+                                      args[1] = (VALUE)2;
                                       args[2] = INT2NUM(cb->mid);
-                                      args[3] = INT2NUM(cb->qos_count);
-                                      args[4] = INT2NUM(*(cb->granted_qos));
+                                      args[3] = granted_qos;
                                       rb_mosquitto_funcall_protected(error_tag, args);
                                     }
                                     break;
@@ -1825,6 +1829,24 @@ static VALUE rb_mosquitto_client_message_retry_equals(VALUE obj, VALUE seconds)
     return Qtrue;
 }
 
+/*
+ * call-seq:
+ *   client.on_connect{|rc| p :connected } -> Boolean
+ *
+ * Set the connect callback. This is called when the broker sends a CONNACK
+ * message in response to a connection.
+ *
+ * @yield connect callback
+ * @yieldparam rc [Integer] the return code of the connection response, one of: 0 - success,
+ *                          1 - connection refused (unacceptable protocol version),
+ *                          2 - connection refused (identifier rejected)
+ *                          3 - connection refused (broker unavailable)
+ * @return [true] on success
+ * @raise [TypeError, ArgumentError] if callback is not a Proc or if the method arity is wrong
+ * @example
+ *   client.on_connect{|rc| p :connected }
+ *
+ */
 static VALUE rb_mosquitto_client_on_connect(int argc, VALUE *argv, VALUE obj)
 {
     VALUE proc, cb;
@@ -1838,6 +1860,23 @@ static VALUE rb_mosquitto_client_on_connect(int argc, VALUE *argv, VALUE obj)
     return Qtrue;
 }
 
+/*
+ * call-seq:
+ *   client.on_disconnect{|rc| p :disconnected } -> Boolean
+ *
+ * Set the disconnect callback. This is called when the broker has received the
+ * DISCONNECT command and has disconnected the client.
+ *
+ * @yield disconnect callback
+ * @yieldparam rc [Integer] integer value indicating the reason for the disconnect. A value of 0
+ *         means the client has called Mosquitto::Client#disconnect. Any other value indicates that
+ *         the disconnect is unexpected.
+ * @return [true] on success
+ * @raise [TypeError, ArgumentError] if callback is not a Proc or if the method arity is wrong
+ * @example
+ *   client.on_disconnect{|rc| p :disconnected }
+ *
+ */
 static VALUE rb_mosquitto_client_on_disconnect(int argc, VALUE *argv, VALUE obj)
 {
     VALUE proc, cb;
@@ -1851,6 +1890,21 @@ static VALUE rb_mosquitto_client_on_disconnect(int argc, VALUE *argv, VALUE obj)
     return Qtrue;
 }
 
+/*
+ * call-seq:
+ *   client.on_publish{|mid| p :published } -> Boolean
+ *
+ * Set the publish callback. This is called when a message initiated with
+ * Mosquitto::Client#publish has been sent to the broker successfully.
+ *
+ * @yield publish callback
+ * @yieldparam mid [Integer] the message id of the sent message
+ * @return [true] on success
+ * @raise [TypeError, ArgumentError] if callback is not a Proc or if the method arity is wrong
+ * @example
+ *   client.on_publish{|mid| p :published }
+ *
+ */
 static VALUE rb_mosquitto_client_on_publish(int argc, VALUE *argv, VALUE obj)
 {
     VALUE proc, cb;
@@ -1864,6 +1918,21 @@ static VALUE rb_mosquitto_client_on_publish(int argc, VALUE *argv, VALUE obj)
     return Qtrue;
 }
 
+/*
+ * call-seq:
+ *   client.on_message{|msg| p msg } -> Boolean
+ *
+ * Set the message callback. This is called when a message is received from the
+ * broker.
+ *
+ * @yield message callback
+ * @yieldparam msg [Mosquitto::Message] the message data
+ * @return [true] on success
+ * @raise [TypeError, ArgumentError] if callback is not a Proc or if the method arity is wrong
+ * @example
+ *   client.on_message{|msg| p msg }
+ *
+ */
 static VALUE rb_mosquitto_client_on_message(int argc, VALUE *argv, VALUE obj)
 {
     VALUE proc, cb;
@@ -1877,12 +1946,29 @@ static VALUE rb_mosquitto_client_on_message(int argc, VALUE *argv, VALUE obj)
     return Qtrue;
 }
 
+/*
+ * call-seq:
+ *   client.on_subscribe{|mid, granted_qos| p :subscribed } -> Boolean
+ *
+ * Set the subscribe callback. This is called when the broker responds to a
+ * subscription request.
+ *
+ * @yield subscription callback
+ * @yieldparam mid [Integer] the message id of the subscribe message.
+ * @yieldparam granted_qos [Array] an array of integers indicating the granted QoS for each of
+ *                                 the subscriptions.
+ * @return [true] on success
+ * @raise [TypeError, ArgumentError] if callback is not a Proc or if the method arity is wrong
+ * @example
+ *   client.on_subscribe{|mid, granted_qos| p :subscribed }
+ *
+ */
 static VALUE rb_mosquitto_client_on_subscribe(int argc, VALUE *argv, VALUE obj)
 {
     VALUE proc, cb;
     MosquittoGetClient(obj);
     rb_scan_args(argc, argv, "01&", &proc, &cb);
-    MosquittoAssertCallback(cb, 3);
+    MosquittoAssertCallback(cb, 2);
     if (!NIL_P(client->subscribe_cb)) rb_gc_unregister_address(&client->subscribe_cb);
     mosquitto_subscribe_callback_set(client->mosq, rb_mosquitto_client_on_subscribe_cb);
     client->subscribe_cb = cb;
@@ -1890,6 +1976,22 @@ static VALUE rb_mosquitto_client_on_subscribe(int argc, VALUE *argv, VALUE obj)
     return Qtrue;
 }
 
+/*
+ * call-seq:
+ *   client.on_unsubscribe{|mid| p :unsubscribed } -> Boolean
+ *
+ * Set the unsubscribe callback. This is called when the broker responds to a
+ * unsubscription request.
+ *
+ * @yield unsubscribe callback
+ * @yieldparam mid [Integer] the message id of the unsubscribe message.
+
+ * @return [true] on success
+ * @raise [TypeError, ArgumentError] if callback is not a Proc or if the method arity is wrong
+ * @example
+ *   client.on_unsubscribe{|mid| p :unsubscribed }
+ *
+ */
 static VALUE rb_mosquitto_client_on_unsubscribe(int argc, VALUE *argv, VALUE obj)
 {
     VALUE proc, cb;
@@ -1903,6 +2005,23 @@ static VALUE rb_mosquitto_client_on_unsubscribe(int argc, VALUE *argv, VALUE obj
     return Qtrue;
 }
 
+/*
+ * call-seq:
+ *   client.on_log{|level, msg| p msg } -> Boolean
+ *
+ * Set the logging callback. This should be used if you want event logging
+ * information from the client library.
+ *
+ * @yield unsubscribe callback
+ * @yieldparam level [Mosquitto::LOG_INFO, Mosquitto::LOG_NOTICE, Mosquitto::LOG_WARNING,
+ *                    Mosquitto::LOG_ERR, Mosquitto::LOG_DEBUG] the log message level
+ * @yieldparam msg [String] log message
+ * @return [true] on success
+ * @raise [TypeError, ArgumentError] if callback is not a Proc or if the method arity is wrong
+ * @example
+ *   client.on_log{|level, msg| p msg }
+ *
+ */
 static VALUE rb_mosquitto_client_on_log(int argc, VALUE *argv, VALUE obj)
 {
     VALUE proc, cb;
