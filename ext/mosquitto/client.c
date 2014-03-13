@@ -436,6 +436,25 @@ static void rb_mosquitto_free_client(void *ptr)
     }
 }
 
+/*
+ * call-seq:
+ *   Mosquitto::Client.new("some-id") -> Mosquitto::Client
+ *
+ * Create a new mosquitto client instance.
+ *
+ * @param identifier [String] the client identifier. Set to nil to have a random one generated.
+ *                            clean_session must be true if the identifier is nil.
+ * @param clean_session [true, false] set to true to instruct the broker to clean all messages
+ *                                    and subscriptions on disconnect, false to instruct it to
+ *                                    keep them
+ * @return [Mosquitto::Client] mosquitto client instance
+ * @raise [Mosquitto::Error] on invalid input params
+ * @note As per the MQTT spec, client identifiers cannot exceed 23 characters
+ * @example
+ *   Mosquitto::Client.new("session_id") -> Mosquitto::Client
+ *   Mosquitto::Client.new(nil, true) -> Mosquitto::Client
+ *
+ */
 static VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
 {
     VALUE client_id;
@@ -453,13 +472,12 @@ static VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
     client = Data_Make_Struct(rb_cMosquittoClient, mosquitto_client_wrapper, rb_mosquitto_mark_client, rb_mosquitto_free_client, cl);
     cl->mosq = mosquitto_new(cl_id, clean_session, (void *)cl);
     if (cl->mosq == NULL) {
+        xfree(cl);
         switch (errno) {
             case EINVAL:
-                xfree(cl);
                 MosquittoError("invalid input params");
                 break;
             case ENOMEM:
-                xfree(cl);
                 rb_memerror();
                 break;
             default:

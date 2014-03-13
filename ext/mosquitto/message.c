@@ -31,17 +31,17 @@ VALUE rb_mosquitto_message_alloc(const struct mosquitto_message *msg)
 }
 
 /*
- *  call-seq:
- *    msg.mid -> Integer
+ * call-seq:
+ *   msg.mid -> Integer
  *
- *  Message identifier for this message. Note that although the MQTT protocol doesn't use message ids
- *  for messages with QoS=0, libmosquitto assigns them message ids so they can be tracked with this parameter.
+ * Message identifier for this message. Note that although the MQTT protocol doesn't use message ids
+ * for messages with QoS=0, libmosquitto assigns them message ids so they can be tracked with this parameter.
  *
- * === Examples
- *
+ * @return [Integer] message identifier
+ * @example
  *   msg.mid -> 2
  *
-*/
+ */
 static VALUE rb_mosquitto_message_mid(VALUE obj)
 {
     struct mosquitto_message *msg;
@@ -51,13 +51,13 @@ static VALUE rb_mosquitto_message_mid(VALUE obj)
 }
 
 /*
- *  call-seq:
- *    msg.topic -> String
+ * call-seq:
+ *   msg.topic -> String
  *
- *  Topic this message was published on.
+ * Topic this message was published on.
  *
- * === Examples
- *
+ * @return [String] topic
+ * @example
  *   msg.topic -> "test"
  *
  */
@@ -70,13 +70,13 @@ static VALUE rb_mosquitto_message_topic(VALUE obj)
 }
 
 /*
- *  call-seq:
- *    msg.to_s -> String
+ * call-seq:
+ *   msg.to_s -> String
  *
- *  Coerces the Mosquitto::Message payload to a Ruby string.
+ * Coerces the Mosquitto::Message payload to a Ruby string.
  *
- * === Examples
- *
+ * @return [String] message payload
+ * @example
  *   msg.to_s -> "message"
  *
  */
@@ -89,13 +89,13 @@ static VALUE rb_mosquitto_message_to_s(VALUE obj)
 }
 
 /*
- *  call-seq:
- *    msg.length -> Integer
+ * call-seq:
+ *   msg.length -> Integer
  *
- *  The length of the message payload
+ * The length of the message payload
  *
- * === Examples
- *
+ * @return [Integer] message length
+ * @example
  *   msg.length -> 7
  *
  */
@@ -108,19 +108,17 @@ static VALUE rb_mosquitto_message_length(VALUE obj)
 }
 
 /*
- *  call-seq:
- *    msg.qos -> Integer
+ * call-seq:
+ *   msg.qos -> Integer
  *
- *  Quality of Service used for the message
+ * Quality of Service used for the message
  *
- * === See
+ * @see Mosquitto::AT_MOST_ONCE
+ * @see Mosquitto::AT_LEAST_ONCE
+ * @see Mosquitto::EXACTLY_ONCE
  *
- *  Mosquitto::AT_MOST_ONCE
- *  Mosquitto::AT_LEAST_ONCE
- *  Mosquitto::EXACTLY_ONCE
- *
- * === Examples
- *
+ * @return [Integer] message quality of service
+ * @example
  *   msg.qos -> Mosquitto::AT_MOST_ONCE
  *
  */
@@ -133,13 +131,13 @@ static VALUE rb_mosquitto_message_qos(VALUE obj)
 }
 
 /*
- *  call-seq:
- *    msg.retain? -> Boolean
+ * call-seq:
+ *   msg.retain? -> Boolean
  *
- *  Set to true if this message was flagged to retain.
+ * Set to true if this message was flagged to retain.
  *
- * === Examples
- *
+ * @return [true, false] retention flag
+ * @example
  *   msg.retain? -> true
  *
  */
