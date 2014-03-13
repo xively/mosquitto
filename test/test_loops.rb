@@ -23,7 +23,6 @@ class TestLoops < MosquittoTestCase
     assert client.loop(10,10)
   end
 
-=begin
   def test_loop_forever
     connected = false
     Thread.new do
@@ -35,16 +34,11 @@ class TestLoops < MosquittoTestCase
       assert_raises TypeError do
         client.loop_forever(:invalid,1)
       end
-      assert_raises Mosquitto::Error do
-        client.loop_forever(10,10)
-      end
       assert client.connect(TEST_HOST, 1883, 10)
       assert client.loop_forever(-1,1)
     end.join(1)
-    sleep 1
     assert connected
   end
-=end
 
   def test_loop_stop_start
     client = Mosquitto::Client.new
