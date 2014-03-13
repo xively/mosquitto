@@ -856,6 +856,22 @@ static void *rb_mosquitto_client_connect_nogvl(void *ptr)
     return (void *)mosquitto_connect(args->mosq, args->host, args->port, args->keepalive);
 }
 
+/*
+ * call-seq:
+ *   client.connect("localhost", 1883, 10) -> Boolean
+ *
+ * Connect to an MQTT broker.
+ *
+ * @param host [String] the hostname or ip address of the broker to connect to.
+ * @param port [Integer] the network port to connect to. Usually 1883 (or 8883 for TLS)
+ * @param keepalive [Integer] the number of seconds after which the broker should send a PING message
+ *                            to the client if no other messages have been exchanged in that time.
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.connect("localhost", 1883, 10) -> Boolean
+ *
+ */
 static VALUE rb_mosquitto_client_connect(VALUE obj, VALUE host, VALUE port, VALUE keepalive)
 {
     struct nogvl_connect_args args;
@@ -887,6 +903,24 @@ static void *rb_mosquitto_client_connect_bind_nogvl(void *ptr)
     return (void *)mosquitto_connect_bind(args->mosq, args->host, args->port, args->keepalive, args->bind_address);
 }
 
+/*
+ * call-seq:
+ *   client.connect_bind("localhost", 1883, 10, "10.0.0.3") -> Boolean
+ *
+ * Connect to an MQTT broker. This extends the functionality of Mosquitto::Client#connect by adding the bind_address
+ * parameter. Use this function if you need to restrict network communication over a particular interface.
+ *
+ * @param host [String] the hostname or ip address of the broker to connect to.
+ * @param port [Integer] the network port to connect to. Usually 1883 (or 8883 for TLS)
+ * @param keepalive [Integer] the number of seconds after which the broker should send a PING message
+ *                            to the client if no other messages have been exchanged in that time.
+ * @param bind_address [String] the hostname or ip address of the local network interface to bind to
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.connect_bind("localhost", 1883, 10, "10.0.0.3") -> Boolean
+ *
+ */
 static VALUE rb_mosquitto_client_connect_bind(VALUE obj, VALUE host, VALUE port, VALUE keepalive, VALUE bind_address)
 {
     struct nogvl_connect_args args;
@@ -920,6 +954,25 @@ static void *rb_mosquitto_client_connect_async_nogvl(void *ptr)
     return mosquitto_connect_async(args->mosq, args->host, args->port, args->keepalive);
 }
 
+/*
+ * call-seq:
+ *   client.connect_async("localhost", 1883, 10) -> Boolean
+ *
+ * Connect to an MQTT broker. This is a non-blocking call. If you use
+ * Mosquitto::Client#connect_async your client must use the threaded interface
+ * Mosquitto::Client#loop_start. If you need to use Mosquitto::Client#loop, you must use
+ * Mosquitto::Client#connect to connect the client.
+ *
+ * @param host [String] the hostname or ip address of the broker to connect to.
+ * @param port [Integer] the network port to connect to. Usually 1883 (or 8883 for TLS)
+ * @param keepalive [Integer] the number of seconds after which the broker should send a PING message
+ *                            to the client if no other messages have been exchanged in that time.
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.connect_async("localhost", 1883, 10) -> Boolean
+ *
+ */
 static VALUE rb_mosquitto_client_connect_async(VALUE obj, VALUE host, VALUE port, VALUE keepalive)
 {
     struct nogvl_connect_args args;
@@ -951,6 +1004,30 @@ static void *rb_mosquitto_client_connect_bind_async_nogvl(void *ptr)
     return mosquitto_connect_bind_async(args->mosq, args->host, args->port, args->keepalive, args->bind_address);
 }
 
+/*
+ * call-seq:
+ *   client.connect_bind_async("localhost", 1883, 10, "10.0.0.3") -> Boolean
+ *
+ * Connect to an MQTT broker. This is a non-blocking call. If you use
+ * Mosquitto::Client#connect_async your client must use the threaded interface
+ * Mosquitto::Client#loop_start. If you need to use Mosquitto::Client#loop, you must use
+ * Mosquitto::Client#connect to connect the client.
+ *
+ * This extends the functionality of Mosquitto::Client#connect_async by adding the
+ * bind_address parameter. Use this function if you need to restrict network
+ * communication over a particular interface.
+ *
+ * @param host [String] the hostname or ip address of the broker to connect to.
+ * @param port [Integer] the network port to connect to. Usually 1883 (or 8883 for TLS)
+ * @param keepalive [Integer] the number of seconds after which the broker should send a PING message
+ *                            to the client if no other messages have been exchanged in that time.
+ * @param bind_address [String] the hostname or ip address of the local network interface to bind to
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.connect_bind_async("localhost", 1883, 10, "10.0.0.3") -> Boolean
+ *
+ */
 static VALUE rb_mosquitto_client_connect_bind_async(VALUE obj, VALUE host, VALUE port, VALUE keepalive, VALUE bind_address)
 {
     struct nogvl_connect_args args;
@@ -983,6 +1060,22 @@ static void *rb_mosquitto_client_reconnect_nogvl(void *ptr)
     return mosquitto_reconnect((struct mosquitto *)ptr);
 }
 
+/*
+ * call-seq:
+ *   client.reconnect -> Boolean
+ *
+ * Reconnect to a broker.
+ *
+ * This function provides an easy way of reconnecting to a broker after a connection has been lost.
+ * It uses the values that were provided in the Mosquitto::Client#connect call.
+ *
+ * @return [true] on success
+ * @note It must not be called before Mosquitto::Client#connect
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or system call errors
+ * @example
+ *   client.reconnect
+ *
+ */
 static VALUE rb_mosquitto_client_reconnect(VALUE obj)
 {
     int ret;
@@ -1005,6 +1098,18 @@ static void *rb_mosquitto_client_disconnect_nogvl(void *ptr)
     return (VALUE)mosquitto_disconnect((struct mosquitto *)ptr);
 }
 
+/*
+ * call-seq:
+ *   client.disconnect-> Boolean
+ *
+ * Disconnect from the broker.
+ *
+ * @return [true] on success
+ * @raise [Mosquitto::Error, SystemCallError] on invalid input params or if the client is not connected
+ * @example
+ *   client.disconnect
+ *
+ */
 static VALUE rb_mosquitto_client_disconnect(VALUE obj)
 {
     int ret;
