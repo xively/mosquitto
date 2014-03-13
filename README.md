@@ -7,14 +7,22 @@
 [MQ Telemetry Transport](http://mqtt.org/) is :
 
 ```
-MQTT stands for MQ Telemetry Transport. It is a publish/subscribe, extremely simple and lightweight messaging protocol, designed for constrained devices and low-bandwidth, high-latency or unreliable networks. The design principles are to minimise network bandwidth and device resource requirements whilst also attempting to ensure reliability and some degree of assurance of delivery. These principles also turn out to make the protocol ideal of the emerging “machine-to-machine” (M2M) or “Internet of Things” world of connected devices, and for mobile applications where bandwidth and battery power are at a premium.
+MQTT stands for MQ Telemetry Transport. It is a publish/subscribe, extremely simple and lightweight messaging
+protocol, designed for constrained devices and low-bandwidth, high-latency or unreliable networks. The design
+principles are to minimise network bandwidth and device resource requirements whilst also attempting to ensure
+reliability and some degree of assurance of delivery. These principles also turn out to make the protocol ideal of
+the emerging “machine-to-machine” (M2M) or “Internet of Things” world of connected devices, and for mobile
+applications where bandwidth and battery power are at a premium.
 ```
 Please see the [FAQ](http://mqtt.org/faq) and [list of supported software](http://mqtt.org/wiki/software).
 
 ### libmosquitto
 
 ```
-Mosquitto is an open source (BSD licensed) message broker that implements the MQ Telemetry Transport protocol version 3.1. MQTT provides a lightweight method of carrying out messaging using a publish/subscribe model. This makes it suitable for "machine to machine" messaging such as with low power sensors or mobile devices such as phones, embedded computers or microcontrollers like the Arduino. 
+Mosquitto is an open source (BSD licensed) message broker that implements the MQ Telemetry Transport protocol
+version 3.1. MQTT provides a lightweight method of carrying out messaging using a publish/subscribe model. This
+makes it suitable for "machine to machine" messaging such as with low power sensors or mobile devices such as
+phones, embedded computers or microcontrollers like the Arduino. 
 ```
 
 See the [project website](http://mosquitto.org/) for more information.
