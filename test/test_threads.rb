@@ -44,8 +44,6 @@ class TestThreads < MosquittoTestCase
     end
 
     threads << Thread.new do
-      # let the subscription messages bubble through first
-      sleep 0.5
       publisher = Mosquitto::Client.new
       publisher.loop_start
       publisher.logger = Logger.new(STDOUT)

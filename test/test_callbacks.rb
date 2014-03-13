@@ -78,7 +78,7 @@ class TestCallbacks < MosquittoTestCase
       publisher.publish(nil, "message_callback", "test", Mosquitto::AT_MOST_ONCE, true)
     end
     publisher.connect(TEST_HOST, TEST_PORT, 10)
-    sleep 2
+    sleep 3
     publisher.loop_stop(true)
 
     subscriber = Mosquitto::Client.new
@@ -90,7 +90,7 @@ class TestCallbacks < MosquittoTestCase
     subscriber.on_message do |msg|
       message = msg
     end
-    sleep 2
+    sleep 3
     subscriber.loop_stop(true)
     assert_equal "test", message.to_s
   end
