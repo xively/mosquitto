@@ -503,6 +503,26 @@ static void *rb_mosquitto_client_reinitialise_nogvl(void *ptr)
     return (void *)mosquitto_reinitialise(args->mosq, args->client_id, args->clean_session, args->obj);
 }
 
+/*
+ * call-seq:
+ *   client.reinitialise("some-id") -> Mosquitto::Client
+ *
+ * Allows an existing mosquitto client to be reused. Call on a mosquitto instance to close any
+ * open network connections, free memory and reinitialise the client with the new parameters.
+ *
+ * @param identifier [String] the client identifier. Set to nil to have a random one generated.
+ *                            clean_session must be true if the identifier is nil.
+ * @param clean_session [true, false] set to true to instruct the broker to clean all messages
+ *                                    and subscriptions on disconnect, false to instruct it to
+ *                                    keep them
+ * @return [Mosquitto::Client] mosquitto client instance
+ * @raise [Mosquitto::Error] on invalid input params
+ * @note As per the MQTT spec, client identifiers cannot exceed 23 characters
+ * @example
+ *   client.reinitialise("session_id") -> Mosquitto::Client
+ *   client.reinitialise(nil, true) -> Mosquitto::Client
+ *
+ */
 static VALUE rb_mosquitto_client_reinitialise(int argc, VALUE *argv, VALUE obj)
 {
     struct nogvl_reinitialise_args args;
