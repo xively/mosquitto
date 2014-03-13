@@ -455,9 +455,11 @@ static VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
     if (cl->mosq == NULL) {
         switch (errno) {
             case EINVAL:
+                xfree(cl);
                 MosquittoError("invalid input params");
                 break;
             case ENOMEM:
+                xfree(cl);
                 rb_memerror();
                 break;
             default:
