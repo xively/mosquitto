@@ -2,6 +2,14 @@
 
 [![Build Status](https://travis-ci.org/bear-metal/mosquitto.png)](https://travis-ci.org/bear-metal/mosquitto)
 
+The mosquitto gem is meant to serve as an easy, performant and standards compliant client for interacting with MQTT brokers.
+
+The API consists of two classes:
+
+[Mosquitto::Client](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client) - the client
+
+[Mosquitto::Message](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Message) - returned from the client
+
 ## About MQTT and libmosquitto
 
 [MQ Telemetry Transport](http://mqtt.org/) is :
