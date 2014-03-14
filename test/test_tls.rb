@@ -29,8 +29,9 @@ class TestTls < MosquittoTestCase
       connected = true
     end
     assert client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil)
-    client.tls_set(ssl_object('all-ca.crt'), nil, ssl_object('client.crt'), ssl_object('client.key'))
+    client.tls_set(ssl_object('mosquitto.org.crt'), nil, nil, nil)
     assert client.connect(TLS_TEST_HOST, TLS_TEST_PORT, 10)
+    client.wait_readable && sleep(3)
     assert connected
   ensure
     client.loop_stop(true)

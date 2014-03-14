@@ -9,13 +9,15 @@ require 'io/wait'
 Thread.abort_on_exception = true
 
 class Mosquitto::Client
+if RUBY_VERSION.split(".").first == '2'
   def wait_readable(timeout = 5)
     IO.for_fd(socket).wait_readable(timeout)
   end
-
-  def wait_writable(timeout = 5)
-    IO.for_fd(socket).wait_writable(timeout)
-  end  
+else
+  def wait_readable(timeout = 5)
+    IO.for_fd(socket).wait(timeout)
+  end
+end
 end
 
 class MosquittoTestCase < Test::Unit::TestCase

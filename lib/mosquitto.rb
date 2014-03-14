@@ -1,6 +1,5 @@
 # encoding: utf-8
 
-require 'openssl'
 begin
 require "mosquitto/mosquitto_ext"
 rescue LoadError
@@ -10,5 +9,3 @@ end
 require 'mosquitto/version' unless defined? Mosquitto::VERSION
 
 require 'mosquitto/client'
-
-at_exit { Mosquitto.cleanup }
