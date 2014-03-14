@@ -9,6 +9,14 @@ module Mosquitto::Logging
     Mosquitto::LOG_DEBUG => Logger::DEBUG
   }
 
+  # Pipes libmosquitto log messages to a Ruby logger instance.
+  #
+  # @param logger [String] a Ruby logger instance. Compatible with SyslogLogger and other
+  #                        implementations as well.
+  # @raise [Argument] on invalid input params
+  # @example
+  #   client.logger = Logger.new(STDOUT)
+  #
   def logger=(obj)
     unless obj.respond_to?(:add) and obj.method(:add).arity != 3
       raise ArgumentError, "invalid Logger instance #{obj.inspect}"
