@@ -5,8 +5,8 @@ require File.expand_path('../lib/mosquitto/version', __FILE__)
 Gem::Specification.new do |s|
   s.name = "mosquitto"
   s.version = Mosquitto::VERSION
-  s.summary = "mosquito - Ruby binding against libmosquitto (http://mosquitto.org/) - a high performance MQTT protocol (http://mqtt.org) client"
-  s.description = "mosquito - Ruby binding against libmosquitto (http://mosquitto.org/) - a high performance MQTT protocol (http://mqtt.org) client"
+  s.summary = "mosquitto - a high perf MQTT 3.1 client"
+  s.description = "Ruby binding against libmosquitto (http://mosquitto.org/) - a high performance MQTT protocol (http://mqtt.org) client"
   s.authors = ["Lourens Naudé", "Bear Metal OÜ"]
   s.email = ["lourens@methodmissing.com", "info@bearmetal.eu"]
   s.homepage = "http://github.com/bear-metal/mosquitto"
