@@ -75,7 +75,7 @@ class TestClient < MosquittoTestCase
       client.connect_async(:invalid, TEST_PORT, 10)
     end
     assert client.connect_async(TEST_HOST, TEST_PORT, 10)
-    sleep 1
+    client.wait_readable
     assert client.socket != -1
   ensure
     client.loop_stop(true)
@@ -88,7 +88,7 @@ class TestClient < MosquittoTestCase
       client.connect_bind_async(TEST_HOST, TEST_PORT, 10, :invalid)
     end
     assert client.connect_bind_async(TEST_HOST, TEST_PORT, 10, '0.0.0.0')
-    sleep 1
+    client.wait_readable
     assert client.socket != -1
   ensure
     client.loop_stop(true)

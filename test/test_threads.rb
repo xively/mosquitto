@@ -9,7 +9,7 @@ class TestThreads < MosquittoTestCase
       publisher = Mosquitto::Client.new
       publisher.loop_start
       assert publisher.connect(TEST_HOST, TEST_PORT, 10)
-      sleep 1
+      publisher.wait_readable
       publisher.loop_stop(true)
     end
 
@@ -17,7 +17,7 @@ class TestThreads < MosquittoTestCase
       subscriber = Mosquitto::Client.new
       subscriber.loop_start
       assert subscriber.connect(TEST_HOST, TEST_PORT, 10)
-      sleep 1
+      subscriber.wait_readable
       subscriber.loop_stop(true)
     end
     threads.each(&:join)
@@ -39,7 +39,7 @@ class TestThreads < MosquittoTestCase
         subscriber.subscribe(nil, "test_pub_sub", Mosquitto::AT_MOST_ONCE)
       end
       assert subscriber.connect(TEST_HOST, TEST_PORT, 10)
-      sleep 3
+      subscriber.wait_readable
       subscriber.loop_stop(true)
     end
 
@@ -56,7 +56,7 @@ class TestThreads < MosquittoTestCase
         end
       end
       assert publisher.connect(TEST_HOST, TEST_PORT, 10)
-      sleep 3
+      publisher.wait_readable
       assert_equal published, 26
       publisher.loop_stop(true)
     end

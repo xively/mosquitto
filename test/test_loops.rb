@@ -9,7 +9,7 @@ class TestLoops < MosquittoTestCase
     assert client.socket == -1
     assert client.connect(TEST_HOST, TEST_PORT, 10)
     assert_instance_of Fixnum, client.socket
-    sleep 1
+    client.wait_readable
     assert client.socket != -1
   end
 

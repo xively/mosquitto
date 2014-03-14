@@ -4,8 +4,19 @@ require 'test/unit'
 require 'mosquitto'
 require 'stringio'
 require 'thread'
+require 'io/wait'
 
 Thread.abort_on_exception = true
+
+class Mosquitto::Client
+  def wait_readable(timeout = 5)
+    IO.for_fd(socket).wait_readable(timeout)
+  end
+
+  def wait_writable(timeout = 5)
+    IO.for_fd(socket).wait_writable(timeout)
+  end  
+end
 
 class MosquittoTestCase < Test::Unit::TestCase
   TEST_HOST = "test.mosquitto.org"
