@@ -231,7 +231,7 @@ static void rb_mosquitto_handle_callback(int *error_tag, mosquitto_callback_t *c
                                 args[0] = client->log_cb;
                                 args[1] = (VALUE)2;
                                 args[2] = INT2NUM(cb->level);
-                                args[3] = rb_str_new2(cb->str);
+                                args[3] = MosquittoEncode(rb_str_new2(cb->str));
                                 rb_mosquitto_funcall_protected(error_tag, args);
                               }
                               break;
@@ -471,6 +471,7 @@ static VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
     } else {
         clean_session = false;
         Check_Type(client_id, T_STRING);
+        MosquittoEncode(client_id);
         cl_id = StringValueCStr(client_id);
     }
     client = Data_Make_Struct(rb_cMosquittoClient, mosquitto_client_wrapper, rb_mosquitto_mark_client, rb_mosquitto_free_client, cl);
@@ -541,6 +542,7 @@ static VALUE rb_mosquitto_client_reinitialise(int argc, VALUE *argv, VALUE obj)
     } else {
         clean_session = false;
         Check_Type(client_id, T_STRING);
+        MosquittoEncode(client_id);
         cl_id = StringValueCStr(client_id);
     }
     args.mosq = client->mosq;
@@ -583,7 +585,9 @@ static VALUE rb_mosquitto_client_will_set(VALUE obj, VALUE topic, VALUE payload,
     int ret;
     MosquittoGetClient(obj);
     Check_Type(topic, T_STRING);
+    MosquittoEncode(topic);
     Check_Type(payload, T_STRING);
+    MosquittoEncode(payload);
     Check_Type(qos, T_FIXNUM);
     ret = mosquitto_will_set(client->mosq, StringValueCStr(topic), (int)RSTRING_LEN(payload), StringValueCStr(payload), NUM2INT(qos), ((retain == Qtrue) ? true : false));
     switch (ret) {
@@ -649,8 +653,14 @@ static VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
 {
     int ret;
     MosquittoGetClient(obj);
-    if (!NIL_P(username)) Check_Type(username, T_STRING);
-    if (!NIL_P(password)) Check_Type(password, T_STRING);
+    if (!NIL_P(username)) {
+        Check_Type(username, T_STRING);
+        MosquittoEncode(username);
+    }
+    if (!NIL_P(password)) {
+        Check_Type(password, T_STRING);
+        MosquittoEncode(password);
+    }
     ret = mosquitto_username_pw_set(client->mosq, (NIL_P(username) ? NULL : StringValueCStr(username)), (NIL_P(password) ? NULL : StringValueCStr(password)));
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -698,10 +708,22 @@ static VALUE rb_mosquitto_client_tls_set(VALUE obj, VALUE cafile, VALUE capath, 
 {
     int ret;
     MosquittoGetClient(obj);
-    if (!NIL_P(cafile)) Check_Type(cafile, T_STRING);
-    if (!NIL_P(capath)) Check_Type(capath, T_STRING);
-    if (!NIL_P(certfile)) Check_Type(certfile, T_STRING);
-    if (!NIL_P(keyfile)) Check_Type(keyfile, T_STRING);
+    if (!NIL_P(cafile)) {
+        Check_Type(cafile, T_STRING);
+        MosquittoEncode(cafile);
+    }
+    if (!NIL_P(capath)) {
+        Check_Type(capath, T_STRING);
+        MosquittoEncode(capath);
+    }
+    if (!NIL_P(certfile)) {
+        Check_Type(certfile, T_STRING);
+        MosquittoEncode(certfile);
+    }
+    if (!NIL_P(keyfile)) {
+        Check_Type(keyfile, T_STRING);
+        MosquittoEncode(keyfile);
+    }
 
     if (NIL_P(cafile) && NIL_P(capath)) MosquittoError("Either CA path or CA file is required!");
     if (NIL_P(certfile) && !NIL_P(keyfile)) MosquittoError("Key file can only be used with a certificate file!");
@@ -790,8 +812,14 @@ static VALUE rb_mosquitto_client_tls_opts_set(VALUE obj, VALUE cert_reqs, VALUE 
     int ret;
     MosquittoGetClient(obj);
     Check_Type(cert_reqs, T_FIXNUM);
-    if (!NIL_P(tls_version)) Check_Type(tls_version, T_STRING);
-    if (!NIL_P(ciphers)) Check_Type(ciphers, T_STRING);
+    if (!NIL_P(tls_version)) {
+        Check_Type(tls_version, T_STRING);
+        MosquittoEncode(tls_version);
+    }
+    if (!NIL_P(ciphers)) {
+        Check_Type(ciphers, T_STRING);
+        MosquittoEncode(ciphers);
+    }
 
     if (NUM2INT(cert_reqs) != 0 && NUM2INT(cert_reqs) != 1) {
         MosquittoError("TLS verification requirement should be one of Mosquitto::SSL_VERIFY_NONE or Mosquitto::SSL_VERIFY_PEER");
@@ -837,7 +865,10 @@ static VALUE rb_mosquitto_client_tls_psk_set(VALUE obj, VALUE psk, VALUE identit
     MosquittoGetClient(obj);
     Check_Type(psk, T_STRING);
     Check_Type(identity, T_STRING);
-    if (!NIL_P(ciphers)) Check_Type(ciphers, T_STRING);
+    if (!NIL_P(ciphers)) {
+        Check_Type(ciphers, T_STRING);
+        MosquittoEncode(ciphers);
+    }
 
     ret = mosquitto_tls_psk_set(client->mosq, StringValueCStr(psk), StringValueCStr(identity), (NIL_P(ciphers) ? NULL : StringValueCStr(ciphers)));
     switch (ret) {
@@ -882,6 +913,7 @@ static VALUE rb_mosquitto_client_connect(VALUE obj, VALUE host, VALUE port, VALU
     int ret;
     MosquittoGetClient(obj);
     Check_Type(host, T_STRING);
+    MosquittoEncode(host);
     Check_Type(port, T_FIXNUM);
     Check_Type(keepalive, T_FIXNUM);
     args.mosq = client->mosq;
@@ -931,9 +963,11 @@ static VALUE rb_mosquitto_client_connect_bind(VALUE obj, VALUE host, VALUE port,
     int ret;
     MosquittoGetClient(obj);
     Check_Type(host, T_STRING);
+    MosquittoEncode(host);
     Check_Type(port, T_FIXNUM);
     Check_Type(keepalive, T_FIXNUM);
     Check_Type(bind_address, T_STRING);
+    MosquittoEncode(bind_address);
     args.mosq = client->mosq;
     args.host = StringValueCStr(host);
     args.port = NUM2INT(port);
@@ -983,6 +1017,7 @@ static VALUE rb_mosquitto_client_connect_async(VALUE obj, VALUE host, VALUE port
     int ret;
     MosquittoGetClient(obj);
     Check_Type(host, T_STRING);
+    MosquittoEncode(host);
     Check_Type(port, T_FIXNUM);
     Check_Type(keepalive, T_FIXNUM);
     args.mosq = client->mosq;
@@ -1038,9 +1073,11 @@ static VALUE rb_mosquitto_client_connect_bind_async(VALUE obj, VALUE host, VALUE
     int ret;
     MosquittoGetClient(obj);
     Check_Type(host, T_STRING);
+    MosquittoEncode(host);
     Check_Type(port, T_FIXNUM);
     Check_Type(keepalive, T_FIXNUM);
     Check_Type(bind_address, T_STRING);
+    MosquittoEncode(bind_address);
     args.mosq = client->mosq;
     args.host = StringValueCStr(host);
     args.port = NUM2INT(port);
@@ -1163,7 +1200,9 @@ static VALUE rb_mosquitto_client_publish(VALUE obj, VALUE mid, VALUE topic, VALU
     int ret, msg_id;
     MosquittoGetClient(obj);
     Check_Type(topic, T_STRING);
+    MosquittoEncode(topic);
     Check_Type(payload, T_STRING);
+    MosquittoEncode(payload);
     Check_Type(qos, T_FIXNUM);
     if (!NIL_P(mid)) {
         Check_Type(mid, T_FIXNUM);
@@ -1228,6 +1267,7 @@ static VALUE rb_mosquitto_client_subscribe(VALUE obj, VALUE mid, VALUE subscript
     int ret, msg_id;
     MosquittoGetClient(obj);
     Check_Type(subscription, T_STRING);
+    MosquittoEncode(subscription);
     Check_Type(qos, T_FIXNUM);
     if (!NIL_P(mid)) {
         Check_Type(mid, T_FIXNUM);
@@ -1281,6 +1321,7 @@ static VALUE rb_mosquitto_client_unsubscribe(VALUE obj, VALUE mid, VALUE subscri
     int ret, msg_id;
     MosquittoGetClient(obj);
     Check_Type(subscription, T_STRING);
+    MosquittoEncode(subscription);
     if (!NIL_P(mid)) {
         Check_Type(mid, T_FIXNUM);
         msg_id = NUM2INT(mid);

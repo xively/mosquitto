@@ -85,7 +85,7 @@ static VALUE rb_mosquitto_message_to_s(VALUE obj)
     struct mosquitto_message *msg;
     MosquittoGetMessage(obj);
     msg = message->msg;
-    return rb_str_new(msg->payload, msg->payloadlen);
+    return MosquittoEncode(rb_str_new(msg->payload, msg->payloadlen));
 }
 
 /*
