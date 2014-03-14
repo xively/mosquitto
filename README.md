@@ -199,6 +199,8 @@ tls_client.tls_set('/path/to/mosquitto.org.crt'), nil, nil, nil)
 tls_client.connect('test.mosquitto.org', 8883, 10)
 ```
 
+See [documentation](http://rubydoc.info/github/bear-metal/mosquitto) for the full API specification.
+
 ## Contact, feedback and bugs
 
 This extension is currently maintained by Lourens Naudé (http://github.com/methodmissing) and contributors.
