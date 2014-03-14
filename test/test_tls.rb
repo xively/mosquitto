@@ -6,18 +6,18 @@ class TestTls < MosquittoTestCase
   def test_tls_set
     client = Mosquitto::Client.new
     assert_raises Mosquitto::Error do
-      client.tls_set(nil, nil, ssl_object('client.crt'), ssl_object('client.key'))
+      client.tls_set(nil, nil, ssl_object('client.crt'), ssl_object('client.key'), nil)
     end
     assert_raises Mosquitto::Error do
-      client.tls_set(ssl_object('all-ca.crt'), ssl_path, ssl_object('client.crt'), nil)
+      client.tls_set(ssl_object('all-ca.crt'), ssl_path, ssl_object('client.crt'), nil, nil)
     end
     assert_raises Mosquitto::Error do
-      client.tls_set(ssl_object('all-ca.crt'), ssl_path, nil, ssl_object('client.key'))
+      client.tls_set(ssl_object('all-ca.crt'), ssl_path, nil, ssl_object('client.key'), nil)
     end
     assert_raises TypeError do
-      client.tls_set(ssl_object('all-ca.crt'), ssl_path, ssl_object('client.crt'), :invalid)
+      client.tls_set(ssl_object('all-ca.crt'), ssl_path, ssl_object('client.crt'), :invalid, nil)
     end
-    client.tls_set(ssl_object('all-ca.crt'), ssl_path, ssl_object('client.crt'), ssl_object('client.key'))
+    client.tls_set(ssl_object('all-ca.crt'), ssl_path, ssl_object('client.crt'), ssl_object('client.key'), nil)
   end
 
   def test_connect
@@ -29,7 +29,7 @@ class TestTls < MosquittoTestCase
       connected = true
     end
     assert client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil)
-    client.tls_set(ssl_object('mosquitto.org.crt'), nil, nil, nil)
+    client.tls_set(ssl_object('mosquitto.org.crt'), nil, nil, nil, nil)
     assert client.connect(TLS_TEST_HOST, TLS_TEST_PORT, 10)
     client.wait_readable && sleep(3)
     assert connected

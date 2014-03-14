@@ -1,6 +1,15 @@
 #include "mosquitto_ext.h"
 
-static VALUE rb_mosquitto_run_callback(mosquitto_callback_t *callback);
+static void rb_mosquitto_run_callback(mosquitto_callback_t *callback);
+
+VALUE mosquitto_tls_password;
+
+static int rb_mosquitto_tls_password_callback(char *buf, int size, int rwflag, void *obj)
+{
+    strncpy(buf, StringValueCStr(mosquitto_tls_password), size);
+    return RSTRING_LEN(mosquitto_tls_password);
+    rb_gc_unregister_address(&mosquitto_tls_password);
+}
 
 /*
  * :nodoc:
@@ -244,7 +253,7 @@ static void rb_mosquitto_handle_callback(int *error_tag, mosquitto_callback_t *c
  *  allocated specific to callback processing.
  *
  */
-static VALUE rb_mosquitto_run_callback(mosquitto_callback_t *callback)
+static void rb_mosquitto_run_callback(mosquitto_callback_t *callback)
 {
     int error_tag;
     rb_mosquitto_handle_callback(&error_tag, callback);
@@ -697,6 +706,7 @@ static VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
  *                          If nil, keyfile must also be nil and no client certificate will be used.
  * @param keyfile [String] path to a file containing the PEM encoded private key for this client. If nil,
  *                         certfile must also be NULL and no client certificate will be used.
+ * @param password [String] password for encrypted keyfile
  * @return [true] on success
  * @raise [Mosquitto::Error] on invalid input params or when TLS is not supported
  * @note This must be called before calling Mosquitto::Client#connect
@@ -704,9 +714,10 @@ static VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
  *   client.tls_set('/certs/all-ca.crt'), '/certs', '/certs/client.crt'), '/certs/client.key')
  *
  */
-static VALUE rb_mosquitto_client_tls_set(VALUE obj, VALUE cafile, VALUE capath, VALUE certfile, VALUE keyfile)
+static VALUE rb_mosquitto_client_tls_set(VALUE obj, VALUE cafile, VALUE capath, VALUE certfile, VALUE keyfile, VALUE password)
 {
     int ret;
+    int (*pw_callback)(char *, int, int, void *) = NULL;
     MosquittoGetClient(obj);
     if (!NIL_P(cafile)) {
         Check_Type(cafile, T_STRING);
@@ -725,11 +736,18 @@ static VALUE rb_mosquitto_client_tls_set(VALUE obj, VALUE cafile, VALUE capath, 
         MosquittoEncode(keyfile);
     }
 
+    if (!NIL_P(password)) {
+        Check_Type(password, T_STRING);
+        mosquitto_tls_password = password;
+        rb_gc_register_address(&mosquitto_tls_password);
+        pw_callback = rb_mosquitto_tls_password_callback;
+    }
+
     if (NIL_P(cafile) && NIL_P(capath)) MosquittoError("Either CA path or CA file is required!");
     if (NIL_P(certfile) && !NIL_P(keyfile)) MosquittoError("Key file can only be used with a certificate file!");
     if (NIL_P(keyfile) && !NIL_P(certfile)) MosquittoError("Certificate file also requires a key file!");
 
-    ret = mosquitto_tls_set(client->mosq, (NIL_P(cafile) ? NULL : StringValueCStr(cafile)), (NIL_P(capath) ? NULL : StringValueCStr(capath)), (NIL_P(certfile) ? NULL : StringValueCStr(certfile)), (NIL_P(keyfile) ? NULL : StringValueCStr(keyfile)), NULL);
+    ret = mosquitto_tls_set(client->mosq, (NIL_P(cafile) ? NULL : StringValueCStr(cafile)), (NIL_P(capath) ? NULL : StringValueCStr(capath)), (NIL_P(certfile) ? NULL : StringValueCStr(certfile)), (NIL_P(keyfile) ? NULL : StringValueCStr(keyfile)), pw_callback);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -2078,6 +2096,8 @@ static VALUE rb_mosquitto_client_on_log(int argc, VALUE *argv, VALUE obj)
 
 void _init_rb_mosquitto_client()
 {
+    mosquitto_tls_password = Qnil;
+
     rb_cMosquittoClient = rb_define_class_under(rb_mMosquitto, "Client", rb_cObject);
 
     /* Init / setup specific methods */
@@ -2123,7 +2143,7 @@ void _init_rb_mosquitto_client()
 
     /* TLS specific methods */
 
-    rb_define_method(rb_cMosquittoClient, "tls_set", rb_mosquitto_client_tls_set, 4);
+    rb_define_method(rb_cMosquittoClient, "tls_set", rb_mosquitto_client_tls_set, 5);
     rb_define_method(rb_cMosquittoClient, "tls_insecure=", rb_mosquitto_client_tls_insecure_set, 1);
     rb_define_method(rb_cMosquittoClient, "tls_opts_set", rb_mosquitto_client_tls_opts_set, 3);
     rb_define_method(rb_cMosquittoClient, "tls_psk_set", rb_mosquitto_client_tls_psk_set, 3);

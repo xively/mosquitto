@@ -203,7 +203,7 @@ tls_client.on_connect do |rc|
   p :tls_connection
 end
 tls_client.tls_opts_set(Mosquitto::SSL_VERIFY_PEER, "tlsv1.2", nil)
-tls_client.tls_set('/path/to/mosquitto.org.crt'), nil, nil, nil)
+tls_client.tls_set('/path/to/mosquitto.org.crt'), nil, nil, nil, nil)
 tls_client.connect('test.mosquitto.org', 8883, 10)
 ```
 
