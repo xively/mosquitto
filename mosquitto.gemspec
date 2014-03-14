@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/bear-metal/mosquitto"
   s.date = Time.now.utc.strftime('%Y-%m-%d')
   s.platform = Gem::Platform::RUBY
-  s.extensions = "ext/mostquitto/extconf.rb"
+  s.extensions = "ext/mosquitto/extconf.rb"
   s.has_rdoc = true
   s.files = `git ls-files`.split("\n")
   s.test_files = `git ls-files test`.split("\n")
