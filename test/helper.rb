@@ -29,6 +29,13 @@ class MosquittoTestCase < Test::Unit::TestCase
 
   undef_method :default_test if method_defined? :default_test
 
+  def wait(&condition)
+    loop do
+      sleep(0.1)
+      break if condition.call
+    end
+  end
+
   def ssl_path
     File.expand_path("../ssl", __FILE__)
   end
