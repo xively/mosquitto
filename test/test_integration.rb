@@ -16,7 +16,6 @@ class TestIntegration < MosquittoTestCase
     end
     @client.on_message do |msg|
       @result = msg.to_s
-      p @result
     end
     @client.connect(TEST_HOST, TEST_PORT, 10)
     wait{ connected }
@@ -54,5 +53,34 @@ class TestIntegration < MosquittoTestCase
     wait{ @result }
     assert_equal expected, @result
     @client.unsubscribe(nil, "1/2")
+  end
+
+  def test_long_topic
+    # check a simple # subscribe works
+    @result = nil
+    expected = "hello mqtt broker on long topic"
+    @client.on_subscribe do |mid, granted_qos|
+      @client.publish(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8", expected, Mosquitto::AT_MOST_ONCE, false)    
+    end
+    @client.subscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8", Mosquitto::AT_MOST_ONCE)
+    wait{ @result }
+    assert_equal expected, @result
+    @client.unsubscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8")
+
+    @result = nil
+    expected = "hello mqtt broker on long topic with hash"
+    @client.on_subscribe do |mid, granted_qos|
+      @client.publish(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8", expected, Mosquitto::AT_MOST_ONCE, false)    
+    end
+    @client.subscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/#", Mosquitto::AT_MOST_ONCE)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "hello mqtt broker on long topic with hash again"
+    @client.publish(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/9/10/0", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+    @client.unsubscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/#")
   end
 end
