@@ -190,4 +190,54 @@ class TestIntegration < MosquittoTestCase
 
     @client.unsubscribe(nil, "#")
   end
+
+  def test_dots
+    # check that dots are not treated differently
+    @result = nil
+    expected = "hello mqtt broker with a dot"
+    @client.on_subscribe do |mid, granted_qos|
+      @client.publish(nil, "1/2/./3", expected, Mosquitto::AT_MOST_ONCE, false)
+    end
+    @client.subscribe(nil, "1/2/./3", Mosquitto::AT_MOST_ONCE)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "1/2", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "1/2/./3/4", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @client.unsubscribe(nil, "1/2/./3")
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "1/2/./3", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "1/2/./3/4", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+  end
 end
