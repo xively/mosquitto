@@ -329,4 +329,40 @@ class TestIntegration < MosquittoTestCase
 
     assert @client.unsubscribe(nil, "a/#")
   end
+
+  def test_wildcard_plus
+    # check that unsub of hash doesn't affect other subscriptions
+    @result = nil
+    expected = "should get this 1"
+    @client.on_subscribe do |mid, granted_qos|
+      assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    end
+    assert @client.subscribe(nil, "+/+/+", Mosquitto::AT_MOST_ONCE)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "should get this 2"
+    assert @client.publish(nil, "a/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "should get this 3"
+    assert @client.publish(nil, "1/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "should not get this"
+    assert @client.publish(nil, "1/2", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get this either"
+    assert @client.publish(nil, "1/2/3/4", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+  end
 end
