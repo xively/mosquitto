@@ -240,4 +240,52 @@ class TestIntegration < MosquittoTestCase
     sleep 1
     assert_nil @result
   end
+
+  def test_active_mq_wildcards
+    # check that ActiveMQ native wildcards are not treated differently
+    @result = nil
+    expected = "hello mqtt broker with fake wildcards"
+    @client.on_subscribe do |mid, granted_qos|
+      @client.publish(nil, "*/>/1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    end
+    @client.subscribe(nil, "*/>/#", Mosquitto::AT_MOST_ONCE)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "1", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "1/2", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get this"
+    @client.publish(nil, "*/2", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should get this"
+    @client.publish(nil, "*/>/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "should get this"
+    @client.publish(nil, "*/>", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+  end
 end
