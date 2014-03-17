@@ -309,6 +309,8 @@ class TestIntegration < MosquittoTestCase
     assert @client.unsubscribe(nil, "a/+/#")
     assert @client.subscribe(nil, "a/#", Mosquitto::AT_MOST_ONCE)
 
+    sleep 1
+
     @result = nil
     expected = "sub on everything below a including a"
     assert @client.publish(nil, "a/b", expected, Mosquitto::AT_MOST_ONCE, false)    
@@ -407,5 +409,34 @@ class TestIntegration < MosquittoTestCase
     assert @client.publish(nil, "a", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
+  end
+
+  def test_duplicate_client_id
+    client1_connected = false, client1_disconnected = false
+    client2 = nil
+    client1 = Mosquitto::Client.new("duplicate")
+    client1.loop_start
+    client1.logger = Logger.new(STDOUT)
+    client1.on_connect do |rc|
+      client1_connected = true
+    end
+    client1.on_disconnect do |rc|
+      client1_disconnected = true
+      client1.loop_stop(true)
+      client2.loop_stop(true)
+    end
+    client1.connect(TEST_HOST, TEST_PORT, 10)
+
+    client1.wait_readable
+
+    client2 = Mosquitto::Client.new("duplicate")
+    client2.loop_start
+    client2.logger = Logger.new(STDOUT)
+    client2.connect(TEST_HOST, TEST_PORT, 10)
+
+    client2.wait_readable
+
+    assert client1_connected
+    assert client1_disconnected
   end
 end
