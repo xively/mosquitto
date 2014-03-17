@@ -17,7 +17,7 @@ class TestIntegration < MosquittoTestCase
     @client.on_message do |msg|
       @result = msg.to_s
     end
-    @client.connect(TEST_HOST, TEST_PORT, 10)
+    assert @client.connect(TEST_HOST, TEST_PORT, 10)
     wait{ connected }
   end
 
@@ -25,20 +25,20 @@ class TestIntegration < MosquittoTestCase
     # check basic pub/sub on QOS 0
     expected = "hello mqtt broker on QOS 0"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+      assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
     end
-    @client.subscribe(nil, "1/2/3", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "1/2/3", Mosquitto::AT_MOST_ONCE)
     wait{ @result }
     assert_equal expected, @result
-    @client.unsubscribe(nil, "1/2/3")
+    assert @client.unsubscribe(nil, "1/2/3")
 
     # check basic pub/sub on QOS 1
     @result = nil
     expected = "hello mqtt broker on QOS 1"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "a/b/c", expected, Mosquitto::AT_LEAST_ONCE, false)    
+      assert @client.publish(nil, "a/b/c", expected, Mosquitto::AT_LEAST_ONCE, false)    
     end
-    @client.subscribe(nil, "a/b/c", Mosquitto::AT_LEAST_ONCE)
+    assert @client.subscribe(nil, "a/b/c", Mosquitto::AT_LEAST_ONCE)
     wait{ @result }
     assert_equal expected, @result
     @client.unsubscribe(nil, "a/b/c")
@@ -47,12 +47,12 @@ class TestIntegration < MosquittoTestCase
     @result = nil
     expected = "hello mqtt broker on QOS 2"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "1/2", expected, Mosquitto::EXACTLY_ONCE, false)    
+      assert @client.publish(nil, "1/2", expected, Mosquitto::EXACTLY_ONCE, false)    
     end
-    @client.subscribe(nil, "1/2", Mosquitto::EXACTLY_ONCE)
+    assert @client.subscribe(nil, "1/2", Mosquitto::EXACTLY_ONCE)
     wait{ @result }
     assert_equal expected, @result
-    @client.unsubscribe(nil, "1/2")
+    assert @client.unsubscribe(nil, "1/2")
   end
 
   def test_long_topic
@@ -60,28 +60,28 @@ class TestIntegration < MosquittoTestCase
     @result = nil
     expected = "hello mqtt broker on long topic"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8", expected, Mosquitto::AT_MOST_ONCE, false)    
+      assert @client.publish(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8", expected, Mosquitto::AT_MOST_ONCE, false)    
     end
-    @client.subscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8", Mosquitto::AT_MOST_ONCE)
     wait{ @result }
     assert_equal expected, @result
-    @client.unsubscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8")
+    assert @client.unsubscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8")
 
     @result = nil
     expected = "hello mqtt broker on long topic with hash"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8", expected, Mosquitto::AT_MOST_ONCE, false)    
+      assert @client.publish(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8", expected, Mosquitto::AT_MOST_ONCE, false)    
     end
-    @client.subscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/#", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/#", Mosquitto::AT_MOST_ONCE)
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "hello mqtt broker on long topic with hash again"
-    @client.publish(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/9/10/0", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/9/10/0", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
-    @client.unsubscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/#")
+    assert @client.unsubscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/#")
   end
 
   def test_overlapping_topics
@@ -89,29 +89,29 @@ class TestIntegration < MosquittoTestCase
     @result = nil
     expected = "hello mqtt broker on hash"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "a/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
+      assert @client.publish(nil, "a/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
     end
-    @client.subscribe(nil, "#", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "#", Mosquitto::AT_MOST_ONCE)
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "hello mqtt broker on some other topic"
-    @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
 
     # now subscribe on a topic that overlaps the root # wildcard - we should still get everything
     @result = nil
-    @client.subscribe(nil, "1/2/3", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "1/2/3", Mosquitto::AT_MOST_ONCE)
     expected = "hello mqtt broker on explicit topic"
-    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "hello mqtt broker on some other topic"
-    @client.publish(nil, "a/b/c/d/e", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "a/b/c/d/e", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
 
@@ -119,52 +119,52 @@ class TestIntegration < MosquittoTestCase
     @client.unsubscribe(nil, "#");
     @result = nil
     expected = "this should not come back..."
-    @client.publish(nil, "1/2/3/4", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "1/2/3/4", expected, Mosquitto::AT_MOST_ONCE, false)    
     sleep 1
     assert_nil @result
 
     @result = nil
     expected = "this should not come back either..."
-    @client.publish(nil, "a/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "a/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
     sleep 1
     assert_nil @result
 
     # this should still come back since we are still subscribed on 1/2/3
     @result = nil
     expected = "we should still get this"
-    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
-    @client.unsubscribe(nil, "1/2/3")
+    assert @client.unsubscribe(nil, "1/2/3")
 
     # repeat the above full test but reverse the order of the subs
     @result = nil
     expected = "hello mqtt broker on hash"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+      assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
     end
-    @client.subscribe(nil, "1/2/3", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "1/2/3", Mosquitto::AT_MOST_ONCE)
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "hello mqtt broker on a different topic - we shouldn't get this"
-    @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
     sleep 1
     assert_nil @result
 
     @result = nil
     expected = "hello mqtt broker on some other topic topic"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "a/b/c/d", expected, Mosquitto::AT_MOST_ONCE, false)    
+      assert @client.publish(nil, "a/b/c/d", expected, Mosquitto::AT_MOST_ONCE, false)    
     end
-    @client.subscribe(nil, "#", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "#", Mosquitto::AT_MOST_ONCE)
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "hello mqtt broker on some other topic"
-    @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
 
@@ -172,23 +172,23 @@ class TestIntegration < MosquittoTestCase
 
     @result = nil
     expected = "this should come back..."
-    @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "this should come back too..."
-    @client.publish(nil, "a/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "a/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "we should still get this as well."
-    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
 
-    @client.unsubscribe(nil, "#")
+    assert @client.unsubscribe(nil, "#")
   end
 
   def test_dots
@@ -196,47 +196,47 @@ class TestIntegration < MosquittoTestCase
     @result = nil
     expected = "hello mqtt broker with a dot"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "1/2/./3", expected, Mosquitto::AT_MOST_ONCE, false)
+      assert @client.publish(nil, "1/2/./3", expected, Mosquitto::AT_MOST_ONCE, false)
     end
-    @client.subscribe(nil, "1/2/./3", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "1/2/./3", Mosquitto::AT_MOST_ONCE)
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "should not get this"
-    @client.publish(nil, "1/2", expected, Mosquitto::AT_MOST_ONCE, false)
+    assert @client.publish(nil, "1/2", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
 
     @result = nil
     expected = "should not get this"
-    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
 
     @result = nil
     expected = "should not get this"
-    @client.publish(nil, "1/2/./3/4", expected, Mosquitto::AT_MOST_ONCE, false)
+    assert @client.publish(nil, "1/2/./3/4", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
 
-    @client.unsubscribe(nil, "1/2/./3")
+    assert @client.unsubscribe(nil, "1/2/./3")
 
     @result = nil
     expected = "should not get this"
-    @client.publish(nil, "1/2/./3", expected, Mosquitto::AT_MOST_ONCE, false)
-    sleep 1
-    assert_nil @result
-
-    @result = nil
-    expected = "should not get this"
-    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    assert @client.publish(nil, "1/2/./3", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
 
     @result = nil
     expected = "should not get this"
-    @client.publish(nil, "1/2/./3/4", expected, Mosquitto::AT_MOST_ONCE, false)
+    assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get this"
+    assert @client.publish(nil, "1/2/./3/4", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
   end
@@ -246,46 +246,87 @@ class TestIntegration < MosquittoTestCase
     @result = nil
     expected = "hello mqtt broker with fake wildcards"
     @client.on_subscribe do |mid, granted_qos|
-      @client.publish(nil, "*/>/1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+      assert @client.publish(nil, "*/>/1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
     end
-    @client.subscribe(nil, "*/>/#", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "*/>/#", Mosquitto::AT_MOST_ONCE)
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "should not get this"
-    @client.publish(nil, "1", expected, Mosquitto::AT_MOST_ONCE, false)
+    assert @client.publish(nil, "1", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
 
     @result = nil
     expected = "should not get this"
-    @client.publish(nil, "1/2", expected, Mosquitto::AT_MOST_ONCE, false)
+    assert @client.publish(nil, "1/2", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
 
     @result = nil
     expected = "should not get this"
-    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
 
     @result = nil
     expected = "should not get this"
-    @client.publish(nil, "*/2", expected, Mosquitto::AT_MOST_ONCE, false)
+    assert @client.publish(nil, "*/2", expected, Mosquitto::AT_MOST_ONCE, false)
     sleep 1
     assert_nil @result
 
     @result = nil
     expected = "should get this"
-    @client.publish(nil, "*/>/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "*/>/3", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
 
     @result = nil
     expected = "should get this"
-    @client.publish(nil, "*/>", expected, Mosquitto::AT_MOST_ONCE, false)    
+    assert @client.publish(nil, "*/>", expected, Mosquitto::AT_MOST_ONCE, false)    
     wait{ @result }
     assert_equal expected, @result
+  end
+
+  def test_native_mqtt_wildcards
+    # check that hash works right with plus
+    @result = nil
+    expected = "sub on everything below a but not a"
+    @client.on_subscribe do |mid, granted_qos|
+      assert @client.publish(nil, "a/b", expected, Mosquitto::AT_MOST_ONCE, false)
+    end
+    assert @client.subscribe(nil, "a/+/#", Mosquitto::AT_MOST_ONCE)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "should not get this"
+    assert @client.publish(nil, "a", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    assert @client.unsubscribe(nil, "a/+/#")
+    assert @client.subscribe(nil, "a/#", Mosquitto::AT_MOST_ONCE)
+
+    @result = nil
+    expected = "sub on everything below a including a"
+    assert @client.publish(nil, "a/b", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "sub on everything below a still including a"
+    assert @client.publish(nil, "a", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "sub on everything below a still including a - should not get b"
+    assert @client.publish(nil, "b", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    assert @client.unsubscribe(nil, "a/#")
   end
 end
