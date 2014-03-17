@@ -83,4 +83,111 @@ class TestIntegration < MosquittoTestCase
     assert_equal expected, @result
     @client.unsubscribe(nil, "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/#")
   end
+
+  def test_overlapping_topics
+    # check a simple # subscribe works
+    @result = nil
+    expected = "hello mqtt broker on hash"
+    @client.on_subscribe do |mid, granted_qos|
+      @client.publish(nil, "a/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
+    end
+    @client.subscribe(nil, "#", Mosquitto::AT_MOST_ONCE)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "hello mqtt broker on some other topic"
+    @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    # now subscribe on a topic that overlaps the root # wildcard - we should still get everything
+    @result = nil
+    @client.subscribe(nil, "1/2/3", Mosquitto::AT_MOST_ONCE)
+    expected = "hello mqtt broker on explicit topic"
+    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "hello mqtt broker on some other topic"
+    @client.publish(nil, "a/b/c/d/e", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+   # now unsub hash - we should only get called back on 1/2/3
+    @client.unsubscribe(nil, "#");
+    @result = nil
+    expected = "this should not come back..."
+    @client.publish(nil, "1/2/3/4", expected, Mosquitto::AT_MOST_ONCE, false)    
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "this should not come back either..."
+    @client.publish(nil, "a/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
+    sleep 1
+    assert_nil @result
+
+    # this should still come back since we are still subscribed on 1/2/3
+    @result = nil
+    expected = "we should still get this"
+    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+    @client.unsubscribe(nil, "1/2/3")
+
+    # repeat the above full test but reverse the order of the subs
+    @result = nil
+    expected = "hello mqtt broker on hash"
+    @client.on_subscribe do |mid, granted_qos|
+      @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    end
+    @client.subscribe(nil, "1/2/3", Mosquitto::AT_MOST_ONCE)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "hello mqtt broker on a different topic - we shouldn't get this"
+    @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "hello mqtt broker on some other topic topic"
+    @client.on_subscribe do |mid, granted_qos|
+      @client.publish(nil, "a/b/c/d", expected, Mosquitto::AT_MOST_ONCE, false)    
+    end
+    @client.subscribe(nil, "#", Mosquitto::AT_MOST_ONCE)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "hello mqtt broker on some other topic"
+    @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @client.unsubscribe(nil, "1/2/3")
+
+    @result = nil
+    expected = "this should come back..."
+    @client.publish(nil, "1/2/3/4/5/6", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "this should come back too..."
+    @client.publish(nil, "a/b/c", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "we should still get this as well."
+    @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)    
+    wait{ @result }
+    assert_equal expected, @result
+
+    @client.unsubscribe(nil, "#")
+  end
 end
