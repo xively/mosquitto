@@ -365,4 +365,47 @@ class TestIntegration < MosquittoTestCase
     sleep 1
     assert_nil @result
   end
+
+  def test_subs
+    assert @client.subscribe(nil, "1/2/3", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "a/+/#", Mosquitto::AT_MOST_ONCE)
+    assert @client.subscribe(nil, "#", Mosquitto::AT_MOST_ONCE)
+
+    sleep 1
+
+    @result = nil
+    expected = "should get everything"
+    assert @client.publish(nil, "1/2/3/4", expected, Mosquitto::AT_MOST_ONCE, false)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "should get everything"
+    assert @client.publish(nil, "a/1/2", expected, Mosquitto::AT_MOST_ONCE, false)
+    wait{ @result }
+    assert_equal expected, @result
+
+    assert @client.unsubscribe(nil, "a/+/#")
+    assert @client.unsubscribe(nil, "#")
+
+    sleep 1
+
+    @result = nil
+    expected = "should still get 1/2/3"
+    assert @client.publish(nil, "1/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    wait{ @result }
+    assert_equal expected, @result
+
+    @result = nil
+    expected = "should not get anything else"
+    assert @client.publish(nil, "a/2/3", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+
+    @result = nil
+    expected = "should not get anything else"
+    assert @client.publish(nil, "a", expected, Mosquitto::AT_MOST_ONCE, false)
+    sleep 1
+    assert_nil @result
+  end
 end
