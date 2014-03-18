@@ -471,10 +471,11 @@ static void rb_mosquitto_free_client(void *ptr)
 static VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
 {
     VALUE client_id;
+    VALUE cl_session;
     char *cl_id = NULL;
     mosquitto_client_wrapper *cl = NULL;
     bool clean_session;
-    rb_scan_args(argc, argv, "01", &client_id);
+    rb_scan_args(argc, argv, "02", &client_id, &cl_session);
     if (NIL_P(client_id)) {
         clean_session = true;
     } else {

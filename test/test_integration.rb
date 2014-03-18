@@ -5,7 +5,6 @@ require File.join(File.dirname(__FILE__), 'helper')
 class TestIntegration < MosquittoTestCase
   def setup
     @result = nil
-    return if @client
     @client = nil
     connected = false
     @client = Mosquitto::Client.new
@@ -438,5 +437,87 @@ class TestIntegration < MosquittoTestCase
 
     assert client1_connected
     assert client1_disconnected
+  end
+
+  def test_clean_session
+    connected = false
+    client1 = Mosquitto::Client.new("clean_session", false)
+    client1.logger = Logger.new(STDOUT)
+    client1.loop_start
+    client1.will_set("l/w/t", "This is an LWT", Mosquitto::AT_LEAST_ONCE, false)
+    client1.on_connect do |rc|
+      
+    end
+    client1.connect(TEST_HOST, TEST_PORT, 10)
+
+    assert client1.subscribe(nil, "a/b/c", Mosquitto::AT_LEAST_ONCE)
+
+    sleep 1
+
+    @result = nil
+    expected = "should not get anything on publish only after the subscribe"
+
+    client1.on_disconnect do |rc|
+      assert @client.publish(nil, "a/b/c", expected, Mosquitto::AT_LEAST_ONCE, false)
+      client1.connect(TEST_HOST, TEST_PORT, 10)
+    end
+
+    client1.disconnect
+
+    sleep 1
+
+    assert_nil @result
+    client1.disconnect
+  end
+
+  def test_retain
+    # publish message with retain
+    @result = nil
+    expected = "should not get anything on publish only after the subscribe"
+    assert @client.publish(nil, "a/b/c", expected, Mosquitto::AT_LEAST_ONCE, true)
+    sleep 1
+    assert_nil @result
+
+    client1 = Mosquitto::Client.new("retain")
+    client1.logger = Logger.new(STDOUT)
+    client1.loop_start
+    client1.on_message do |msg|
+      @result = msg.to_s
+    end
+    client1.connect(TEST_HOST, TEST_PORT, 10)
+    client1.wait_readable
+
+    assert client1.subscribe(nil, "a/b/c", Mosquitto::AT_LEAST_ONCE)
+
+    wait{ @result }
+    assert_equal expected, @result
+
+    client1.disconnect
+
+    sleep 1
+
+    # clear retained message
+    assert @client.publish(nil, "a/b/c", "", Mosquitto::AT_LEAST_ONCE, true)
+  end
+
+  def test_lwt
+    assert @client.subscribe(nil, "will/topic", Mosquitto::AT_MOST_ONCE)
+
+    will = "This is an LWT"
+    client1 = Mosquitto::Client.new
+    client1.logger = Logger.new(STDOUT)
+    client1.loop_start
+    client1.will_set("will/topic", will, Mosquitto::AT_LEAST_ONCE, false)
+    client1.on_connect do |rc|
+      client1.disconnect
+      client1.loop_stop(true)
+    end
+    client1.connect(TEST_HOST, TEST_PORT, 10)
+
+    client1.wait_readable
+
+    @result = nil
+    wait{ @result }
+    assert_equal will, @result
   end
 end
