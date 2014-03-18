@@ -593,13 +593,15 @@ static VALUE rb_mosquitto_client_reinitialise(int argc, VALUE *argv, VALUE obj)
 static VALUE rb_mosquitto_client_will_set(VALUE obj, VALUE topic, VALUE payload, VALUE qos, VALUE retain)
 {
     int ret;
+    int payload_len;
     MosquittoGetClient(obj);
     Check_Type(topic, T_STRING);
     MosquittoEncode(topic);
     Check_Type(payload, T_STRING);
     MosquittoEncode(payload);
     Check_Type(qos, T_FIXNUM);
-    ret = mosquitto_will_set(client->mosq, StringValueCStr(topic), (int)RSTRING_LEN(payload), StringValueCStr(payload), NUM2INT(qos), ((retain == Qtrue) ? true : false));
+    payload_len = (int)RSTRING_LEN(payload);
+    ret = mosquitto_will_set(client->mosq, StringValueCStr(topic), payload_len, (payload_len == 0 ? NULL : StringValueCStr(payload)), NUM2INT(qos), ((retain == Qtrue) ? true : false));
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
@@ -1231,7 +1233,7 @@ static VALUE rb_mosquitto_client_publish(VALUE obj, VALUE mid, VALUE topic, VALU
     args.mid = NIL_P(mid) ? NULL : &msg_id;
     args.topic = StringValueCStr(topic);
     args.payloadlen = (int)RSTRING_LEN(payload);
-    args.payload = (const char *)StringValueCStr(payload);
+    args.payload = (const char *)(args.payloadlen == 0 ? NULL : StringValueCStr(payload));
     args.qos = NUM2INT(qos);
     args.retain = (retain == Qtrue) ? true : false;
     ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_publish_nogvl, (void *)&args, RUBY_UBF_IO, 0);

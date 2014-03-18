@@ -5,6 +5,7 @@ require 'mosquitto'
 require 'stringio'
 require 'thread'
 require 'io/wait'
+require 'timeout'
 
 Thread.abort_on_exception = true
 
@@ -30,9 +31,12 @@ class MosquittoTestCase < Test::Unit::TestCase
   undef_method :default_test if method_defined? :default_test
 
   def wait(&condition)
-    loop do
-      sleep(0.1)
-      break if condition.call
+    Timeout.timeout(5) do
+      loop do
+        sleep(0.2)
+        @client.loop_misc
+        break if condition.call
+      end
     end
   end
 

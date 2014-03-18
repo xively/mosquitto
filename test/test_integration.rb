@@ -7,7 +7,7 @@ class TestIntegration < MosquittoTestCase
     @result = nil
     @client = nil
     connected = false
-    @client = Mosquitto::Client.new
+    @client = Mosquitto::Client.new(nil, true)
     @client.loop_start
     @client.logger = Logger.new(STDOUT)
     @client.on_connect do |rc|
@@ -18,6 +18,10 @@ class TestIntegration < MosquittoTestCase
     end
     assert @client.connect(TEST_HOST, TEST_PORT, 10)
     wait{ connected }
+  end
+
+  def teardown
+    @client.disconnect
   end
 
   def test_basic
@@ -440,14 +444,10 @@ class TestIntegration < MosquittoTestCase
   end
 
   def test_clean_session
-    connected = false
-    client1 = Mosquitto::Client.new("clean_session", false)
+    client1 = Mosquitto::Client.new
     client1.logger = Logger.new(STDOUT)
     client1.loop_start
     client1.will_set("l/w/t", "This is an LWT", Mosquitto::AT_LEAST_ONCE, false)
-    client1.on_connect do |rc|
-      
-    end
     client1.connect(TEST_HOST, TEST_PORT, 10)
 
     assert client1.subscribe(nil, "a/b/c", Mosquitto::AT_LEAST_ONCE)
@@ -478,24 +478,26 @@ class TestIntegration < MosquittoTestCase
     sleep 1
     assert_nil @result
 
-    client1 = Mosquitto::Client.new("retain")
+    result = nil
+    client1 = Mosquitto::Client.new(nil, true)
     client1.logger = Logger.new(STDOUT)
     client1.loop_start
     client1.on_message do |msg|
-      @result = msg.to_s
+      result = msg.to_s
     end
     client1.connect(TEST_HOST, TEST_PORT, 10)
     client1.wait_readable
 
     assert client1.subscribe(nil, "a/b/c", Mosquitto::AT_LEAST_ONCE)
 
-    wait{ @result }
-    assert_equal expected, @result
+    wait{ result }
+    assert_equal expected, result
 
     client1.disconnect
 
     sleep 1
 
+    result = nil
     # clear retained message
     assert @client.publish(nil, "a/b/c", "", Mosquitto::AT_LEAST_ONCE, true)
   end
