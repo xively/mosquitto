@@ -1,6 +1,6 @@
 # mosquitto - a high perf MQTT 3.1 client
 
-[![Build Status](https://travis-ci.org/bear-metal/mosquitto.png)](https://travis-ci.org/bear-metal/mosquitto)
+[![Build Status](https://travis-ci.org/xively/mosquitto.png)](https://travis-ci.org/xively/mosquitto)
 
 The mosquitto gem is meant to serve as an easy, performant and standards compliant client for interacting with MQTT brokers.
 
