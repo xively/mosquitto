@@ -9,9 +9,11 @@ module Mosquitto::Logging
     Mosquitto::LOG_DEBUG => Logger::DEBUG
   }
 
+  attr_reader :logger
+
   # Pipes libmosquitto log messages to a Ruby logger instance.
   #
-  # @param logger [String] a Ruby logger instance. Compatible with SyslogLogger and other
+  # @param logger [Logger] a Ruby logger instance. Compatible with SyslogLogger and other
   #                        implementations as well.
   # @raise [Argument] on invalid input params
   # @example
@@ -26,7 +28,18 @@ module Mosquitto::Logging
 
     on_log do |level, message|
       severity = LOG_LEVELS[level] || Logger::UNKNOWN
-      @logger.add(severity, message.to_s, "MQTT")
+      logger.add(severity, message.to_s, "MQTT")
     end
+  end
+
+  # Pipe debug messages through an already assigned logger instance.
+  #
+  # @param message [string] a message to log
+  # @param severity [Mosquitto::LOG_ERR, Mosquitto::LOG_WARNING, Mosquitto::LOG_INFO, Mosquitto::LOG_DEBUG] log severity
+  # @example
+  #   client.log("message")
+  #
+  def log(message, severity = Logger::DEBUG)
+    logger.add(severity, message.to_s, "MQTT") if logger
   end
 end
