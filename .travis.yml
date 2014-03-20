@@ -10,7 +10,7 @@ install:
   - sudo make install
   - bundle install
 before_script:
-  - mosquitto
+  - mosquitto -d
 bundler_args: --quiet
 rvm:
   - 1.9.3
