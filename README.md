@@ -224,7 +224,7 @@ Use 'bundle install' to install the necessary development and testing gems:
 bundle install
 rake
 ```
-Tests by default run against the public `test.mosquitto.org` MQTT server, which supports TLS as well. More information is available at http://test.mosquitto.org/. Alternatively, should you wish you run tests against a local MQTT broker, change the following constants in the test helper to `localhost`:
+Tests by default run against an MQTT server on localhost, which is expected to support TLS on port 8883 as well.
 
 ``` ruby
 class MosquittoTestCase < Test::Unit::TestCase

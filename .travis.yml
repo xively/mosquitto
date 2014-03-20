@@ -9,6 +9,8 @@ install:
   - cmake .
   - sudo make install
   - bundle install
+before_script:
+  - mosquitto
 bundler_args: --quiet
 rvm:
   - 1.9.3
