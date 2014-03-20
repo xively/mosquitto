@@ -431,7 +431,6 @@ static void rb_mosquitto_mark_client(void *ptr)
         rb_gc_mark(client->subscribe_cb);
         rb_gc_mark(client->unsubscribe_cb);
         rb_gc_mark(client->log_cb);
-        rb_gc_mark(client->callback_thread);
     }
 }
 
@@ -445,6 +444,10 @@ static void rb_mosquitto_free_client(void *ptr)
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)ptr;
     if (client) {
         if (client->mosq != NULL) mosquitto_destroy(client->mosq);
+        if (!NIL_P(client->callback_thread)) {
+            rb_thread_kill(client->callback_thread);
+            client->callback_thread = Qnil;
+        }
         xfree(client);
     }
 }
