@@ -444,7 +444,7 @@ static void rb_mosquitto_free_client(void *ptr)
 {
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)ptr;
     if (client) {
-        mosquitto_destroy(client->mosq);
+        if (client->mosq != NULL) mosquitto_destroy(client->mosq);
         xfree(client);
     }
 }
