@@ -66,7 +66,7 @@ static VALUE rb_mosquitto_message_topic(VALUE obj)
     struct mosquitto_message *msg;
     MosquittoGetMessage(obj);
     msg = message->msg;
-    return rb_str_new2(msg->topic);
+    return MosquittoEncode(rb_str_new2(msg->topic));
 }
 
 /*

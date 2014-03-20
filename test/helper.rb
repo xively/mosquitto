@@ -34,7 +34,6 @@ class MosquittoTestCase < Test::Unit::TestCase
     Timeout.timeout(5) do
       loop do
         sleep(0.2)
-        @client.loop_misc
         break if condition.call
       end
     end

@@ -3,6 +3,12 @@
 require File.join(File.dirname(__FILE__), 'helper')
 
 class TestIntegration < MosquittoTestCase
+  TOPICS = ["1/2/3", "a/b/c", "1/2", "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8",
+           "1/2/3/this_is_a_long_topic_that_wasnt_working/before/4/5/6/7/8/#", "#", "1/2/./3", "*/>/#",
+           "a/+/#", "a/#", "+/+/+", "will/topic"]
+
+  CLIENT_IDS = %w(test_integration test_lwt test_clean_session test_duplicate)
+
   def setup
     @result = nil
     @client = nil
@@ -21,7 +27,49 @@ class TestIntegration < MosquittoTestCase
   end
 
   def teardown
+    disconnected, connected = false, false
+    @client.on_disconnect do |rc|
+      disconnected = true
+    end
     @client.disconnect
+    wait{ disconnected }
+    @client.loop_stop(true)
+
+    CLIENT_IDS.each do |client_id|
+      disconnected = false
+      client = Mosquitto::Client.new(client_id)
+      client.loop_start
+      client.on_disconnect do |rc|
+        disconnected = true
+      end
+      client.on_connect do |rc|
+        assert client.disconnect
+      end
+      assert client.connect(TEST_HOST, TEST_PORT, 10)
+      wait{ disconnected }
+      client.loop_stop(true)
+    end
+
+    client = Mosquitto::Client.new("purge")
+    client.loop_start
+    client.on_connect do |rc|
+      connected = true
+    end
+    client.on_message do |msg|
+      if msg.retain?
+        assert client.publish(nil, msg.topic, "", Mosquitto::AT_LEAST_ONCE, true) 
+      end
+    end
+    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    wait{ connected }
+
+    TOPICS.each do |topic|
+      assert client.subscribe(nil, topic, Mosquitto::AT_MOST_ONCE)
+    end
+
+    sleep 5
+    client.disconnect
+    client.loop_stop(true)
   end
 
   def test_basic
@@ -417,7 +465,7 @@ class TestIntegration < MosquittoTestCase
   def test_duplicate_client_id
     client1_connected = false, client1_disconnected = false
     client2 = nil
-    client1 = Mosquitto::Client.new("duplicate")
+    client1 = Mosquitto::Client.new("test_duplicate")
     client1.loop_start
     client1.logger = Logger.new(STDOUT)
     client1.on_connect do |rc|
@@ -432,7 +480,7 @@ class TestIntegration < MosquittoTestCase
 
     client1.wait_readable
 
-    client2 = Mosquitto::Client.new("duplicate")
+    client2 = Mosquitto::Client.new("test_duplicate")
     client2.loop_start
     client2.logger = Logger.new(STDOUT)
     client2.connect(TEST_HOST, TEST_PORT, 10)
@@ -444,7 +492,7 @@ class TestIntegration < MosquittoTestCase
   end
 
   def test_clean_session
-    client1 = Mosquitto::Client.new
+    client1 = Mosquitto::Client.new("test_clean_session")
     client1.logger = Logger.new(STDOUT)
     client1.loop_start
     client1.will_set("l/w/t", "This is an LWT", Mosquitto::AT_LEAST_ONCE, false)
@@ -467,7 +515,6 @@ class TestIntegration < MosquittoTestCase
     sleep 1
 
     assert_nil @result
-    client1.disconnect
   end
 
   def test_retain
@@ -506,7 +553,7 @@ class TestIntegration < MosquittoTestCase
     assert @client.subscribe(nil, "will/topic", Mosquitto::AT_MOST_ONCE)
 
     will = "This is an LWT"
-    client1 = Mosquitto::Client.new
+    client1 = Mosquitto::Client.new("test_lwt")
     client1.logger = Logger.new(STDOUT)
     client1.loop_start
     client1.will_set("will/topic", will, Mosquitto::AT_LEAST_ONCE, false)
