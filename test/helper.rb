@@ -9,18 +9,6 @@ require 'timeout'
 
 Thread.abort_on_exception = true
 
-class Mosquitto::Client
-if RUBY_VERSION.split(".").first == '2'
-  def wait_readable(timeout = 15)
-    IO.for_fd(socket).wait_readable(timeout)
-  end
-else
-  def wait_readable(timeout = 15)
-    IO.for_fd(socket).wait(timeout)
-  end
-end
-end
-
 class MosquittoTestCase < Test::Unit::TestCase
   TEST_HOST = "test.mosquitto.org"
   TEST_PORT = 1883

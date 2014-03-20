@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    mosquitto (0.1)
+    mosquitto (0.2)
 
 GEM
   remote: https://rubygems.org/
