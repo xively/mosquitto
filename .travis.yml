@@ -10,7 +10,8 @@ install:
   - sudo make install
   - bundle install
 before_script:
-  - mosquitto -d
+  - erb test/mosquitto.conf.erb > test/mosquitto.conf
+  - mosquitto -d -c test/mosquitto.conf
 bundler_args: --quiet
 rvm:
   - 1.9.3
