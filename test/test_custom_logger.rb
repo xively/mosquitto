@@ -16,7 +16,7 @@ class TestCustomLogger < MosquittoTestCase
 
     client.logger = logger
     client.loop_start
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     assert client.subscribe(nil, "custom_logger", Mosquitto::AT_MOST_ONCE)
     client.wait_readable
 

@@ -19,7 +19,7 @@ class MosquittoTestCase < Test::Unit::TestCase
   undef_method :default_test if method_defined? :default_test
 
   def wait(&condition)
-    Timeout.timeout(5) do
+    Timeout.timeout(15) do
       loop do
         sleep(0.2)
         break if condition.call

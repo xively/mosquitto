@@ -22,7 +22,7 @@ class TestIntegration < MosquittoTestCase
     @client.on_message do |msg|
       @result = msg.to_s
     end
-    assert @client.connect(TEST_HOST, TEST_PORT, 10)
+    assert @client.connect(TEST_HOST, TEST_PORT, 60)
     wait{ connected }
   end
 
@@ -45,7 +45,7 @@ class TestIntegration < MosquittoTestCase
       client.on_connect do |rc|
         assert client.disconnect
       end
-      assert client.connect(TEST_HOST, TEST_PORT, 10)
+      assert client.connect(TEST_HOST, TEST_PORT, 60)
       wait{ disconnected }
       client.loop_stop(true)
     end
@@ -60,7 +60,7 @@ class TestIntegration < MosquittoTestCase
         assert client.publish(nil, msg.topic, "", Mosquitto::AT_LEAST_ONCE, true) 
       end
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     wait{ connected }
 
     TOPICS.each do |topic|
@@ -479,14 +479,14 @@ class TestIntegration < MosquittoTestCase
       client1.loop_stop(true)
       client2.loop_stop(true)
     end
-    client1.connect(TEST_HOST, TEST_PORT, 10)
+    client1.connect(TEST_HOST, TEST_PORT, 60)
 
     client1.wait_readable
 
     client2 = Mosquitto::Client.new("test_duplicate")
     client2.loop_start
     client2.logger = Logger.new(STDOUT)
-    client2.connect(TEST_HOST, TEST_PORT, 10)
+    client2.connect(TEST_HOST, TEST_PORT, 60)
 
     client2.wait_readable
 
@@ -499,7 +499,7 @@ class TestIntegration < MosquittoTestCase
     client1.logger = Logger.new(STDOUT)
     client1.loop_start
     client1.will_set("l/w/t", "This is an LWT", Mosquitto::AT_LEAST_ONCE, false)
-    client1.connect(TEST_HOST, TEST_PORT, 10)
+    client1.connect(TEST_HOST, TEST_PORT, 60)
 
     assert client1.subscribe(nil, "a/b/c", Mosquitto::AT_LEAST_ONCE)
 
@@ -510,7 +510,7 @@ class TestIntegration < MosquittoTestCase
 
     client1.on_disconnect do |rc|
       assert @client.publish(nil, "a/b/c", expected, Mosquitto::AT_LEAST_ONCE, false)
-      client1.connect(TEST_HOST, TEST_PORT, 10)
+      client1.connect(TEST_HOST, TEST_PORT, 60)
     end
 
     client1.disconnect
@@ -535,7 +535,7 @@ class TestIntegration < MosquittoTestCase
     client1.on_message do |msg|
       result = msg.to_s
     end
-    client1.connect(TEST_HOST, TEST_PORT, 10)
+    client1.connect(TEST_HOST, TEST_PORT, 60)
     client1.wait_readable
 
     assert client1.subscribe(nil, "a/b/c", Mosquitto::AT_LEAST_ONCE)
@@ -564,7 +564,7 @@ class TestIntegration < MosquittoTestCase
       client1.disconnect
       client1.loop_stop(true)
     end
-    client1.connect(TEST_HOST, TEST_PORT, 10)
+    client1.connect(TEST_HOST, TEST_PORT, 60)
 
     client1.wait_readable
 

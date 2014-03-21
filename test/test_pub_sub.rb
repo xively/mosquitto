@@ -8,7 +8,7 @@ class TestPubSub < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.publish(nil, "publish", "test", Mosquitto::AT_MOST_ONCE, true)
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     assert_raises TypeError do
       client.publish(nil, :invalid, "test", Mosquitto::AT_MOST_ONCE, true)
     end
@@ -21,7 +21,7 @@ class TestPubSub < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.subscribe(nil, "subscribe", Mosquitto::AT_MOST_ONCE)
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     assert_raises TypeError do
       client.subscribe(nil, :topic, Mosquitto::AT_MOST_ONCE)
     end
@@ -34,7 +34,7 @@ class TestPubSub < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.unsubscribe(nil, "unsubscribe")
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     assert_raises TypeError do
       client.unsubscribe(nil, :topic)
     end
@@ -44,7 +44,7 @@ class TestPubSub < MosquittoTestCase
 
   def test_subscribe_unsubscribe
     client = Mosquitto::Client.new
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     assert client.subscribe(nil, "subscribe_unsubscribe", Mosquitto::AT_MOST_ONCE)
     assert client.unsubscribe(nil, "subscribe_unsubscribe")
   end

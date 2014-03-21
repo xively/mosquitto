@@ -50,9 +50,9 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     assert_raises TypeError do
-      client.connect(:invalid, TEST_PORT, 10)
+      client.connect(:invalid, TEST_PORT, 60)
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
   ensure
     client.loop_stop(true)
   end
@@ -61,9 +61,9 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     assert_raises TypeError do
-      client.connect_bind("localhost", TEST_PORT, 10, :invalid)
+      client.connect_bind("localhost", TEST_PORT, 60, :invalid)
     end
-    assert client.connect_bind(TEST_HOST, TEST_PORT, 10, "0.0.0.0")
+    assert client.connect_bind(TEST_HOST, TEST_PORT, 60, "0.0.0.0")
   ensure
     client.loop_stop(true)
   end
@@ -72,9 +72,9 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     assert_raises TypeError do
-      client.connect_async(:invalid, TEST_PORT, 10)
+      client.connect_async(:invalid, TEST_PORT, 60)
     end
-    assert client.connect_async(TEST_HOST, TEST_PORT, 10)
+    assert client.connect_async(TEST_HOST, TEST_PORT, 60)
     client.wait_readable
     assert client.socket != -1
   ensure
@@ -85,9 +85,9 @@ class TestClient < MosquittoTestCase
     client = Mosquitto::Client.new
     assert client.loop_start
     assert_raises TypeError do
-      client.connect_bind_async(TEST_HOST, TEST_PORT, 10, :invalid)
+      client.connect_bind_async(TEST_HOST, TEST_PORT, 60, :invalid)
     end
-    assert client.connect_bind_async(TEST_HOST, TEST_PORT, 10, '0.0.0.0')
+    assert client.connect_bind_async(TEST_HOST, TEST_PORT, 60, '0.0.0.0')
     client.wait_readable
     assert client.socket != -1
   ensure
@@ -100,7 +100,7 @@ class TestClient < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.disconnect
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     assert client.disconnect
   ensure
     client.loop_stop(true)
@@ -111,7 +111,7 @@ class TestClient < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.reconnect
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     assert client.reconnect
   end
 

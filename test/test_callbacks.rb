@@ -14,7 +14,7 @@ class TestCallbacks < MosquittoTestCase
     client.on_disconnect do |rc|
       disconnected = true
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     client.wait_readable
     assert client.disconnect
     sleep 3
@@ -30,7 +30,7 @@ class TestCallbacks < MosquittoTestCase
     client.on_log do |level, msg|
       logs << msg
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     assert client.disconnect
     client.wait_readable
     assert_equal 2, logs.size
@@ -56,7 +56,7 @@ class TestCallbacks < MosquittoTestCase
     client.on_unsubscribe do |mid|
       unsubscribed = true
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 10)
+    assert client.connect(TEST_HOST, TEST_PORT, 60)
     client.wait_readable
     assert subscribed
     assert unsubscribed
@@ -73,7 +73,7 @@ class TestCallbacks < MosquittoTestCase
     publisher.on_connect do |rc|
       publisher.publish(nil, "message_callback", "test", Mosquitto::AT_MOST_ONCE, true)
     end
-    publisher.connect(TEST_HOST, TEST_PORT, 10)
+    publisher.connect(TEST_HOST, TEST_PORT, 60)
     publisher.wait_readable
     publisher.loop_stop(true)
 
@@ -82,7 +82,7 @@ class TestCallbacks < MosquittoTestCase
     subscriber.on_connect do |rc|
       subscriber.subscribe(nil, "message_callback", Mosquitto::AT_MOST_ONCE)
     end
-    subscriber.connect(TEST_HOST, TEST_PORT, 10)
+    subscriber.connect(TEST_HOST, TEST_PORT, 60)
     subscriber.on_message do |msg|
       message = msg
     end
