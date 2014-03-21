@@ -68,8 +68,11 @@ class TestIntegration < MosquittoTestCase
     end
 
     sleep 5
-    client.disconnect rescue Mosquitto::Error
-    client.loop_stop(true)
+    begin
+      client.disconnect
+      client.loop_stop(true)
+    rescue Mosquitto::Error
+    end
   end
 
   def test_basic
