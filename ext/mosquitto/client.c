@@ -1615,7 +1615,7 @@ static VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
        default:
            pthread_mutex_destroy(&client->callback_mutex);
            pthread_cond_destroy(&client->callback_cond);
-           rb_thread_kill(client->callback_thread);
+           if (!NIL_P(client->callback_thread)) rb_thread_kill(client->callback_thread);
            client->callback_thread = Qnil;
            return Qtrue;
     }
