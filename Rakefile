@@ -31,6 +31,13 @@ Rake::TestTask.new(:integration) do |t|
   t.warning = true
 end
 
+desc 'Run mosquitto TLS tests'
+Rake::TestTask.new(:tls) do |t|
+  t.test_files = Dir.glob("test/test_tls.rb")
+  t.verbose = true
+  t.warning = true
+end
+
 namespace :debug do
   desc "Run the test suite under gdb"
   task :gdb do

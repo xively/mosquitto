@@ -691,7 +691,7 @@ static VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
 
 /*
  * call-seq:
- *   client.tls_set('/certs/all-ca.crt'), '/certs', '/certs/client.crt'), '/certs/client.key') -> Boolean
+ *   client.tls_set('/certs/all-ca.crt'), '/certs', '/certs/client.crt'), '/certs/client.key', 'password') -> Boolean
  *
  * Configure the client for certificate based SSL/TLS support.
  * 
@@ -717,7 +717,7 @@ static VALUE rb_mosquitto_client_auth(VALUE obj, VALUE username, VALUE password)
  * @raise [Mosquitto::Error] on invalid input params or when TLS is not supported
  * @note This must be called before calling Mosquitto::Client#connect
  * @example
- *   client.tls_set('/certs/all-ca.crt'), '/certs', '/certs/client.crt'), '/certs/client.key')
+ *   client.tls_set('/certs/all-ca.crt'), '/certs', '/certs/client.crt'), '/certs/client.key', 'password')
  *
  */
 static VALUE rb_mosquitto_client_tls_set(VALUE obj, VALUE cafile, VALUE capath, VALUE certfile, VALUE keyfile, VALUE password)
