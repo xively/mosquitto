@@ -562,7 +562,6 @@ class TestIntegration < MosquittoTestCase
     client1.will_set("will/topic", will, Mosquitto::AT_LEAST_ONCE, false)
     client1.on_connect do |rc|
       client1.disconnect
-      client1.loop_stop(true)
     end
     client1.connect(TEST_HOST, TEST_PORT, 60)
 

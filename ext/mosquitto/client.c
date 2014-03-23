@@ -281,7 +281,7 @@ static VALUE rb_mosquitto_callback_thread(void *obj)
             rb_mosquitto_run_callback(waiter.callback);
         }
     }
-
+	printf("!!!!! DIED !!!!!\n");
     return Qnil;
 }
 
@@ -1562,8 +1562,8 @@ static VALUE rb_mosquitto_client_loop_start(VALUE obj)
            MosquittoError("thread support is not available");
            break;
        default:
-           pthread_mutex_init(&client->callback_mutex, NULL);
-           pthread_cond_init(&client->callback_cond, NULL);
+           if (pthread_mutex_init(&client->callback_mutex, NULL) != 0) MosquittoError("failed to create callback thread mutex");
+           if (pthread_cond_init(&client->callback_cond, NULL) != 0) MosquittoError("failed to create callback thread condition var");
            client->callback_thread = rb_thread_create(rb_mosquitto_callback_thread, client);
            /* Allow the callback thread some startup time */
            time.tv_sec  = 0;
@@ -1613,9 +1613,9 @@ static VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
            MosquittoError("thread support is not available");
            break;
        default:
-           pthread_mutex_destroy(&client->callback_mutex);
-           pthread_cond_destroy(&client->callback_cond);
            if (!NIL_P(client->callback_thread)) rb_thread_kill(client->callback_thread);
+           if (pthread_mutex_destroy(&client->callback_mutex) != 0) MosquittoError("could not destroy callback thread mutex");
+           if (pthread_cond_destroy(&client->callback_cond) != 0) MosquittoError("could not destroy callback condition var");
            client->callback_thread = Qnil;
            return Qtrue;
     }
