@@ -7,8 +7,8 @@ VALUE mosquitto_tls_password;
 static int rb_mosquitto_tls_password_callback(char *buf, int size, int rwflag, void *obj)
 {
     strncpy(buf, StringValueCStr(mosquitto_tls_password), size);
-    return RSTRING_LEN(mosquitto_tls_password);
     rb_gc_unregister_address(&mosquitto_tls_password);
+    return RSTRING_LEN(mosquitto_tls_password);
 }
 
 /*
