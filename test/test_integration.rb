@@ -31,7 +31,11 @@ class TestIntegration < MosquittoTestCase
     @client.on_disconnect do |rc|
       disconnected = true
     end
-    @client.disconnect
+    begin
+      @client.disconnect
+    rescue Mosquitto::Error
+      disconnected = true
+    end
     wait{ disconnected }
     @client.loop_stop(true)
 

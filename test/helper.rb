@@ -16,7 +16,7 @@ class MosquittoTestCase < Test::Unit::TestCase
 
   TLS_TEST_HOST = "localhost"
   TLS_TEST_PORT = 8883
-  TIMEOUT = 120
+  TIMEOUT = 180
 
   undef_method :default_test if method_defined? :default_test
 
