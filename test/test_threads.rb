@@ -64,6 +64,6 @@ class TestThreads < MosquittoTestCase
     threads.each{|t| t.join(3) }
     messages.uniq!
     messages.sort!
-    assert_equal ('a'..'z').to_a, messages
+    assert_equal ('a'..'z').to_a, messages.sort
   end
 end
