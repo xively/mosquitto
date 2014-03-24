@@ -47,10 +47,10 @@ static mosquitto_callback_t *mosquitto_callback_queue_pop(mosquitto_client_wrapp
  *  Only applicable to clients that run with the threaded Mosquitto::Client#loop_start event loop
  *
  */
-static void *mosquitto_wait_for_callbacks(void *w)
+static void *mosquitto_wait_for_callbacks(void *c)
 {
-    mosquitto_callback_waiting_t *waiter = (mosquitto_callback_waiting_t *)w;
-    mosquitto_client_wrapper *client = waiter->client;
+    mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)c;
+    mosquitto_callback_waiting_t *waiter = client->waiter;
 
     pthread_mutex_lock(&client->callback_mutex);
     while (!waiter->abort && (waiter->callback = mosquitto_callback_queue_pop(client)) == NULL)
@@ -69,10 +69,10 @@ static void *mosquitto_wait_for_callbacks(void *w)
  *  Only applicable to clients that run with the threaded Mosquitto::Client#loop_start event loop
  *
  */
-static void mosquitto_stop_waiting_for_callbacks(void *w)
+static void mosquitto_stop_waiting_for_callbacks(void *c)
 {
-    mosquitto_callback_waiting_t *waiter = (mosquitto_callback_waiting_t *)w;
-    mosquitto_client_wrapper *client = waiter->client;
+    mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)c;
+    mosquitto_callback_waiting_t *waiter = client->waiter;
 
     pthread_mutex_lock(&client->callback_mutex);
     waiter->abort = 1;
@@ -269,19 +269,17 @@ static void rb_mosquitto_run_callback(mosquitto_callback_t *callback)
 static VALUE rb_mosquitto_callback_thread(void *obj)
 {
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)obj;
-    mosquitto_callback_waiting_t waiter;
-    waiter.callback = NULL;
-    waiter.abort = 0;
-    waiter.client = client;
-    while (!waiter.abort)
+    mosquitto_callback_waiting_t *waiter = client->waiter;
+    waiter->callback = NULL;
+    waiter->abort = 0;
+    while (!waiter->abort)
     {
-        rb_thread_call_without_gvl(mosquitto_wait_for_callbacks, (void *)&waiter, mosquitto_stop_waiting_for_callbacks, (void *)&waiter);
-        if (waiter.callback)
+        rb_thread_call_without_gvl(mosquitto_wait_for_callbacks, (void *)client, mosquitto_stop_waiting_for_callbacks, (void *)client);
+        if (waiter->callback)
         {
-            rb_mosquitto_run_callback(waiter.callback);
+            rb_mosquitto_run_callback(waiter->callback);
         }
     }
-	printf("!!!!! DIED !!!!!\n");
     return Qnil;
 }
 
@@ -431,6 +429,7 @@ static void rb_mosquitto_mark_client(void *ptr)
         rb_gc_mark(client->subscribe_cb);
         rb_gc_mark(client->unsubscribe_cb);
         rb_gc_mark(client->log_cb);
+        rb_gc_mark(client->callback_thread);
     }
 }
 
@@ -444,10 +443,7 @@ static void rb_mosquitto_free_client(void *ptr)
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)ptr;
     if (client) {
         if (client->mosq != NULL) mosquitto_destroy(client->mosq);
-        if (!NIL_P(client->callback_thread)) {
-            rb_thread_kill(client->callback_thread);
-            client->callback_thread = Qnil;
-        }
+        //if (client->waiter != NULL) xfree(client->waiter);
         xfree(client);
     }
 }
@@ -511,6 +507,7 @@ static VALUE rb_mosquitto_client_s_new(int argc, VALUE *argv, VALUE client)
     cl->log_cb = Qnil;
     cl->callback_thread = Qnil;
     cl->callback_queue = NULL;
+    cl->waiter = NULL;
     rb_obj_call_init(client, 0, NULL);
     return client;
 }
@@ -1562,6 +1559,7 @@ static VALUE rb_mosquitto_client_loop_start(VALUE obj)
            MosquittoError("thread support is not available");
            break;
        default:
+           client->waiter = MOSQ_ALLOC(mosquitto_callback_waiting_t);
            if (pthread_mutex_init(&client->callback_mutex, NULL) != 0) MosquittoError("failed to create callback thread mutex");
            if (pthread_cond_init(&client->callback_cond, NULL) != 0) MosquittoError("failed to create callback thread condition var");
            client->callback_thread = rb_thread_create(rb_mosquitto_callback_thread, client);
@@ -1581,7 +1579,7 @@ static void *rb_mosquitto_client_loop_stop_nogvl(void *ptr)
 
 /*
  * call-seq:
- *   client.loop_start -> Boolean
+ *   client.loop_stop(true) -> Boolean
  *
  * This is part of the threaded client interface. Call this once to stop the
  * network thread previously created with Mosquitto::Client#loop_start. This call
@@ -1594,12 +1592,13 @@ static void *rb_mosquitto_client_loop_stop_nogvl(void *ptr)
  * @return [true] on success
  * @raise [Mosquitto::Error] on invalid input params or if thread support is not available
  * @example
- *   client.loop_start
+ *   client.loop_stop(true)
  *
  */
 static VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
 {
     struct nogvl_loop_stop_args args;
+    struct timeval time;
     int ret;
     MosquittoGetClient(obj);
     args.mosq = client->mosq;
@@ -1613,9 +1612,14 @@ static VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
            MosquittoError("thread support is not available");
            break;
        default:
-           if (!NIL_P(client->callback_thread)) rb_thread_kill(client->callback_thread);
-           if (pthread_mutex_destroy(&client->callback_mutex) != 0) MosquittoError("could not destroy callback thread mutex");
-           if (pthread_cond_destroy(&client->callback_cond) != 0) MosquittoError("could not destroy callback condition var");
+           mosquitto_stop_waiting_for_callbacks(client);
+           /* Allow the callback thread some shutdown time */
+           time.tv_sec  = 0;
+           time.tv_usec = 100 * 1000;  /* 0.1 sec */
+           rb_thread_wait_for(time);
+           if(pthread_mutex_destroy(&client->callback_mutex) == EINVAL) MosquittoError("could not destroy callback thread mutex");
+           if(pthread_cond_destroy(&client->callback_cond) == EINVAL) MosquittoError("could not destroy callback condition var");
+           xfree(client->waiter);
            client->callback_thread = Qnil;
            return Qtrue;
     }

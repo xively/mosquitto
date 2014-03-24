@@ -2,6 +2,7 @@
 #define MOSQUITTO_CLIENT_H
 
 typedef struct mosquitto_callback_t mosquitto_callback_t;
+typedef struct mosquitto_callback_waiting_t mosquitto_callback_waiting_t;
 
 typedef struct {
     struct mosquitto *mosq;
@@ -15,6 +16,7 @@ typedef struct {
     VALUE callback_thread;
     pthread_mutex_t callback_mutex;
     pthread_cond_t callback_cond;
+    mosquitto_callback_waiting_t *waiter;
     mosquitto_callback_t *callback_queue;
 } mosquitto_client_wrapper;
 
@@ -90,10 +92,8 @@ struct mosquitto_callback_t {
     mosquitto_callback_t *next;
 };
 
-typedef struct mosquitto_callback_waiting_t mosquitto_callback_waiting_t;
 struct mosquitto_callback_waiting_t {
     mosquitto_callback_t *callback;
-    mosquitto_client_wrapper *client;
     bool abort;
 };
 

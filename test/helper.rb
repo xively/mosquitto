@@ -8,6 +8,7 @@ require 'io/wait'
 require 'timeout'
 
 Thread.abort_on_exception = true
+STDOUT.sync
 
 class MosquittoTestCase < Test::Unit::TestCase
   TEST_HOST = "localhost"
