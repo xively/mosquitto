@@ -7,7 +7,7 @@ class TestLoops < MosquittoTestCase
     client = Mosquitto::Client.new
     assert_equal(-1, client.socket)
     assert client.socket == -1
-    assert client.connect(TEST_HOST, TEST_PORT, 60)
+    assert client.connect(TEST_HOST, TEST_PORT, TIMEOUT)
     assert_instance_of Fixnum, client.socket
     client.wait_readable
     assert client.socket != -1
@@ -18,7 +18,7 @@ class TestLoops < MosquittoTestCase
     assert_raises Mosquitto::Error do
       client.loop(10,10)
     end
-    assert client.connect(TEST_HOST, TEST_PORT, 60)
+    assert client.connect(TEST_HOST, TEST_PORT, TIMEOUT)
     assert client.publish(nil, "loop", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.loop(10,10)
   end
@@ -34,7 +34,7 @@ class TestLoops < MosquittoTestCase
       assert_raises TypeError do
         client.loop_forever(:invalid,1)
       end
-      assert client.connect(TEST_HOST, 1883, 60)
+      assert client.connect(TEST_HOST, 1883, TIMEOUT)
       assert client.loop_forever(-1,1)
     end.join(1)
     assert connected
@@ -42,7 +42,7 @@ class TestLoops < MosquittoTestCase
 
   def test_loop_stop_start
     client = Mosquitto::Client.new
-    assert client.connect(TEST_HOST, TEST_PORT, 60)
+    assert client.connect(TEST_HOST, TEST_PORT, TIMEOUT)
     assert client.publish(nil, "loop_stop_start", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.loop_start
     sleep 1
@@ -51,7 +51,7 @@ class TestLoops < MosquittoTestCase
 
   def test_want_write_p
     client = Mosquitto::Client.new
-    assert client.connect(TEST_HOST, TEST_PORT, 60)
+    assert client.connect(TEST_HOST, TEST_PORT, TIMEOUT)
     assert !client.want_write?
   end
 end
