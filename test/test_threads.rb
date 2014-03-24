@@ -39,7 +39,7 @@ class TestThreads < MosquittoTestCase
         subscriber.subscribe(nil, "test_pub_sub", Mosquitto::AT_MOST_ONCE)
       end
       assert subscriber.connect(TEST_HOST, TEST_PORT, 60)
-      subscriber.wait_readable
+      subscriber.wait_readable && sleep(2)
       subscriber.loop_stop(true)
     end
 
@@ -56,12 +56,12 @@ class TestThreads < MosquittoTestCase
         end
       end
       assert publisher.connect(TEST_HOST, TEST_PORT, 60)
-      publisher.wait_readable
+      publisher.wait_readable && sleep(2)
       assert_equal published, 26
       publisher.loop_stop(true)
     end
 
-    threads.each{|t| t.join(3) }
+    threads.each{|t| t.join(5) }
     messages.uniq!
     messages.sort!
     assert_equal ('a'..'z').to_a, messages.sort

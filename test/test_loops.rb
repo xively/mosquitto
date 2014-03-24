@@ -45,6 +45,7 @@ class TestLoops < MosquittoTestCase
     assert client.connect(TEST_HOST, TEST_PORT, 60)
     assert client.publish(nil, "loop_stop_start", "test", Mosquitto::AT_MOST_ONCE, true)
     assert client.loop_start
+    sleep 1
     assert client.loop_stop(true)
   end
 

@@ -2,6 +2,7 @@
 
 static void rb_mosquitto_run_callback(mosquitto_callback_t *callback);
 static void rb_mosquitto_free_callback(mosquitto_callback_t *callback);
+static void rb_mosquitto_client_reap_event_thread(mosquitto_client_wrapper *client);
 
 VALUE mosquitto_tls_password;
 
@@ -451,6 +452,7 @@ static void rb_mosquitto_free_client(void *ptr)
             if (!NIL_P(client->callback_thread)) {
                 mosquitto_stop_waiting_for_callbacks(client);
                 mosquitto_loop_stop(client->mosq, true);
+                rb_mosquitto_client_reap_event_thread(client);
             }
             mosquitto_destroy(client->mosq);
         }
@@ -1587,6 +1589,20 @@ static void *rb_mosquitto_client_loop_stop_nogvl(void *ptr)
     return (VALUE)mosquitto_loop_stop(args->mosq, args->force);
 }
 
+static void rb_mosquitto_client_reap_event_thread(mosquitto_client_wrapper *client)
+{
+    struct timeval time;
+    mosquitto_stop_waiting_for_callbacks(client);
+    /* Allow the callback thread some shutdown time */
+    time.tv_sec  = 0;
+    time.tv_usec = 100 * 1000;  /* 0.1 sec */
+    rb_thread_wait_for(time);
+    if (pthread_mutex_destroy(&client->callback_mutex) == EINVAL) MosquittoError("could not destroy callback thread mutex");
+    if (pthread_cond_destroy(&client->callback_cond) == EINVAL) MosquittoError("could not destroy callback condition var");
+    xfree(client->waiter);
+    client->callback_thread = Qnil;
+}
+
 /*
  * call-seq:
  *   client.loop_stop(true) -> Boolean
@@ -1608,7 +1624,6 @@ static void *rb_mosquitto_client_loop_stop_nogvl(void *ptr)
 static VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
 {
     struct nogvl_loop_stop_args args;
-    struct timeval time;
     int ret;
     MosquittoGetClient(obj);
     args.mosq = client->mosq;
@@ -1622,15 +1637,7 @@ static VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
            MosquittoError("thread support is not available");
            break;
        default:
-           mosquitto_stop_waiting_for_callbacks(client);
-           /* Allow the callback thread some shutdown time */
-           time.tv_sec  = 0;
-           time.tv_usec = 100 * 1000;  /* 0.1 sec */
-           rb_thread_wait_for(time);
-           if(pthread_mutex_destroy(&client->callback_mutex) == EINVAL) MosquittoError("could not destroy callback thread mutex");
-           if(pthread_cond_destroy(&client->callback_cond) == EINVAL) MosquittoError("could not destroy callback condition var");
-           xfree(client->waiter);
-           client->callback_thread = Qnil;
+           rb_mosquitto_client_reap_event_thread(client);
            return Qtrue;
     }
 }

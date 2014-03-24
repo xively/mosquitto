@@ -26,5 +26,8 @@ class TestCustomLogger < MosquittoTestCase
     assert_match(/sending SUBSCRIBE/, logs)
     assert_match(/custom_logger/, logs)
     assert_match(/Client mosq/, logs)
+
+  ensure
+    client.loop_stop(true)
   end
 end
