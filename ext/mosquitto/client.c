@@ -442,8 +442,13 @@ static void rb_mosquitto_free_client(void *ptr)
 {
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)ptr;
     if (client) {
-        if (client->mosq != NULL) mosquitto_destroy(client->mosq);
-        //if (client->waiter != NULL) xfree(client->waiter);
+        if (client->mosq != NULL) {
+            if (!NIL_P(client->callback_thread)) {
+                mosquitto_stop_waiting_for_callbacks(client);
+                mosquitto_loop_stop(client->mosq, true);
+            }
+            mosquitto_destroy(client->mosq);
+        }
         xfree(client);
     }
 }
