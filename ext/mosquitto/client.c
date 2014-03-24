@@ -1,6 +1,7 @@
 #include "mosquitto_ext.h"
 
 static void rb_mosquitto_run_callback(mosquitto_callback_t *callback);
+static void rb_mosquitto_free_callback(mosquitto_callback_t *callback);
 
 VALUE mosquitto_tls_password;
 
@@ -73,9 +74,13 @@ static void mosquitto_stop_waiting_for_callbacks(void *c)
 {
     mosquitto_client_wrapper *client = (mosquitto_client_wrapper *)c;
     mosquitto_callback_waiting_t *waiter = client->waiter;
+    mosquitto_callback_t *callback = NULL;
 
     pthread_mutex_lock(&client->callback_mutex);
     waiter->abort = 1;
+    while ((callback = mosquitto_callback_queue_pop(client)) != NULL) {
+        rb_mosquitto_free_callback(callback);
+    }
     pthread_mutex_unlock(&client->callback_mutex);
     pthread_cond_signal(&client->callback_cond);
 }
