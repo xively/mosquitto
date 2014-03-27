@@ -576,7 +576,7 @@ class TestIntegration < MosquittoTestCase
 
     IO.for_fd(client1.socket).close
 
-    sleep 1
+    sleep 3
 
     wait{ @result }
     assert_equal will, @result
