@@ -6,9 +6,9 @@ The mosquitto gem is meant to serve as an easy, performant and standards complia
 
 The API consists of two classes:
 
-[Mosquitto::Client](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client) - the client
+[Mosquitto::Client](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Client) - the client
 
-[Mosquitto::Message](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Message) - returned from the client
+[Mosquitto::Message](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Message) - returned from the client
 
 ## About MQTT and libmosquitto
 
@@ -180,17 +180,17 @@ publisher.connect("test.mosquitto.org", 1883, 10)
 
 The following callbacks are supported (please follow links for further documentation) :
 
-* [connect](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client:on_connect) - called when the broker sends a CONNACK message in response to a connection.
-* [disconnect](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client:on_disconnect) - called when the broker has received the DISCONNECT command and has disconnected the client.
-* [log](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client:on_log) - should be used if you want event logging information from the client library.
-* [subscribe](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client:on_subscribe) - called when the broker responds to a subscription request.
-* [unsubscribe](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client:on_unsubscribe) - called when the broker responds to a unsubscription request.
-* [publish](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client:on_publish) - called when a message initiated with Mosquitto::Client#publish has been sent to the broker successfully.
-* [message](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client:on_message) - called when a message is received from the broker.
+* [connect](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Client:on_connect) - called when the broker sends a CONNACK message in response to a connection.
+* [disconnect](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Client:on_disconnect) - called when the broker has received the DISCONNECT command and has disconnected the client.
+* [log](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Client:on_log) - should be used if you want event logging information from the client library.
+* [subscribe](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Client:on_subscribe) - called when the broker responds to a subscription request.
+* [unsubscribe](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Client:on_unsubscribe) - called when the broker responds to a unsubscription request.
+* [publish](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Client:on_publish) - called when a message initiated with Mosquitto::Client#publish has been sent to the broker successfully.
+* [message](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Client:on_message) - called when a message is received from the broker.
 
 ### TLS / SSL
 
-libmosquitto builds with TLS support by default, however [pre-shared key (PSK)](http://rubydoc.info/github/bear-metal/mosquitto/master/Mosquitto/Client:tls_psk_set) support is not available when linked against older OpenSSL versions.
+libmosquitto builds with TLS support by default, however [pre-shared key (PSK)](http://rubydoc.info/github/xively/mosquitto/master/Mosquitto/Client:tls_psk_set) support is not available when linked against older OpenSSL versions.
 
 ``` ruby
 tls_client = Mosquitto::Client.new
@@ -207,13 +207,13 @@ tls_client.tls_set('/path/to/mosquitto.org.crt'), nil, nil, nil, nil)
 tls_client.connect('test.mosquitto.org', 8883, 10)
 ```
 
-See [documentation](http://rubydoc.info/github/bear-metal/mosquitto) for the full API specification.
+See [documentation](http://rubydoc.info/github/xively/mosquitto) for the full API specification.
 
 ## Contact, feedback and bugs
 
 This extension is currently maintained by Lourens Naudé (http://github.com/methodmissing) and contributors.
 
-Please file bugs / issues and feature requests on the [issue tracker](https://github.com/bear-metal/mosquitto/issues)
+Please file bugs / issues and feature requests on the [issue tracker](https://github.com/xively/mosquitto/issues)
 
 ## Development
 
@@ -237,7 +237,7 @@ class MosquittoTestCase < Test::Unit::TestCase
 
 ## Resources
 
-Documentation available at http://rubydoc.info/github/bear-metal/mosquitto
+Documentation available at http://rubydoc.info/github/xively/mosquitto
 
 ## Special Thanks
 
