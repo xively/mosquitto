@@ -37,7 +37,7 @@ See the [project website](http://mosquitto.org/) for more information.
 
 ## Requirements
 
-This gem links against version 1.2.3 of `libmosquitto` . You will need to install additional packages for your system.
+This gem links against version 1.3.1 of `libmosquitto` . You will need to install additional packages for your system.
 
 ### OS X
 
@@ -51,17 +51,17 @@ brew install mosquitto
 
 ``` sh
 sudo apt-get update
-sudo apt-get install pkg-config cmake openssl
+sudo apt-get install pkg-config cmake openssl libc-ares-dev
 ```
 
-The current Ubuntu packages aren't on 1.2.3 yet - it's recommended to build libmosquitto from source (see below) until further notice. OpenSSL is an optional dependency - libmosquitto builds without it, however TLS specific features would not be available.
+The current Ubuntu packages aren't on 1.3.1 yet - it's recommended to build libmosquitto from source (see below) until further notice. OpenSSL is an optional dependency - libmosquitto builds without it, however TLS specific features would not be available.
 
 ### Building libmosquitto from source
 
 ``` sh
-wget http://mosquitto.org/files/source/mosquitto-1.2.3.tar.gz
-tar xzf mosquitto-1.2.3.tar.gz
-cd mosquitto-1.2.3
+wget http://mosquitto.org/files/source/mosquitto-1.3.1.tar.gz
+tar xzf mosquitto-1.3.1.tar.gz
+cd mosquitto-1.3.1
 cmake .
 sudo make install
 ```
@@ -87,7 +87,7 @@ When are requirements or dependencies are met, the following should install mosq
 gem install mosquitto
 ```
 
-The extension checks for libmosquitto presence as well as a 1.2.3 version.
+The extension checks for libmosquitto presence as well as a 1.3.1 version.
 
 ## Usage
 
