@@ -25,6 +25,15 @@ typedef struct {
     Data_Get_Struct(obj, mosquitto_client_wrapper, client); \
     if (!client) rb_raise(rb_eTypeError, "uninitialized Mosquitto client!");
 
+#define RetryNotConnectedOnce() \
+    if (retried == false) { \
+        time.tv_sec  = 0; \
+        time.tv_usec = 300 * 1000; \
+        rb_thread_wait_for(time); \
+        retried = true; \
+        goto retry_once; \
+    }
+
 #define MosquittoAssertCallback(cb, arity) \
     if (NIL_P(cb)){ \
         cb = proc; \

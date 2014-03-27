@@ -1187,13 +1187,17 @@ static void *rb_mosquitto_client_disconnect_nogvl(void *ptr)
 static VALUE rb_mosquitto_client_disconnect(VALUE obj)
 {
     int ret;
+    bool retried = false;
+    struct timeval time;
     MosquittoGetClient(obj);
+  retry_once:
     ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_disconnect_nogvl, (void *)client->mosq, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
            MosquittoError("invalid input params");
            break;
        case MOSQ_ERR_NO_CONN:
+           RetryNotConnectedOnce();
            MosquittoError("client not connected to broker");
            break;
        default:
@@ -1231,6 +1235,8 @@ static VALUE rb_mosquitto_client_publish(VALUE obj, VALUE mid, VALUE topic, VALU
 {
     struct nogvl_publish_args args;
     int ret, msg_id;
+    struct timeval time;
+    bool retried = false;
     MosquittoGetClient(obj);
     Check_Type(topic, T_STRING);
     MosquittoEncode(topic);
@@ -1248,6 +1254,7 @@ static VALUE rb_mosquitto_client_publish(VALUE obj, VALUE mid, VALUE topic, VALU
     args.payload = (const char *)(args.payloadlen == 0 ? NULL : StringValueCStr(payload));
     args.qos = NUM2INT(qos);
     args.retain = (retain == Qtrue) ? true : false;
+  retry_once:
     ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_publish_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -1257,6 +1264,7 @@ static VALUE rb_mosquitto_client_publish(VALUE obj, VALUE mid, VALUE topic, VALU
            rb_memerror();
            break;
        case MOSQ_ERR_NO_CONN:
+           RetryNotConnectedOnce();
            MosquittoError("client not connected to broker");
            break;
        case MOSQ_ERR_PROTOCOL:
@@ -1298,6 +1306,8 @@ static VALUE rb_mosquitto_client_subscribe(VALUE obj, VALUE mid, VALUE subscript
 {
     struct nogvl_subscribe_args args;
     int ret, msg_id;
+    struct timeval time;
+    bool retried = false;
     MosquittoGetClient(obj);
     Check_Type(subscription, T_STRING);
     MosquittoEncode(subscription);
@@ -1310,6 +1320,7 @@ static VALUE rb_mosquitto_client_subscribe(VALUE obj, VALUE mid, VALUE subscript
     args.mid = NIL_P(mid) ? NULL : &msg_id;
     args.subscription = StringValueCStr(subscription);
     args.qos = NUM2INT(qos);
+  retry_once:
     ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_subscribe_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -1319,6 +1330,7 @@ static VALUE rb_mosquitto_client_subscribe(VALUE obj, VALUE mid, VALUE subscript
            rb_memerror();
            break;
        case MOSQ_ERR_NO_CONN:
+           RetryNotConnectedOnce();
            MosquittoError("client not connected to broker");
            break;
        default:
@@ -1352,6 +1364,8 @@ static VALUE rb_mosquitto_client_unsubscribe(VALUE obj, VALUE mid, VALUE subscri
 {
     struct nogvl_subscribe_args args;
     int ret, msg_id;
+    struct timeval time;
+    bool retried = false;
     MosquittoGetClient(obj);
     Check_Type(subscription, T_STRING);
     MosquittoEncode(subscription);
@@ -1362,6 +1376,7 @@ static VALUE rb_mosquitto_client_unsubscribe(VALUE obj, VALUE mid, VALUE subscri
     args.mosq = client->mosq;
     args.mid = NIL_P(mid) ? NULL : &msg_id;
     args.subscription = StringValueCStr(subscription);
+  retry_once:
     ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_unsubscribe_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -1371,6 +1386,7 @@ static VALUE rb_mosquitto_client_unsubscribe(VALUE obj, VALUE mid, VALUE subscri
            rb_memerror();
            break;
        case MOSQ_ERR_NO_CONN:
+           RetryNotConnectedOnce();
            MosquittoError("client not connected to broker");
            break;
        default:
@@ -1438,12 +1454,15 @@ static VALUE rb_mosquitto_client_loop(VALUE obj, VALUE timeout, VALUE max_packet
 {
     struct nogvl_loop_args args;
     int ret;
+    struct timeval time;
+    bool retried = false;
     MosquittoGetClient(obj);
     Check_Type(timeout, T_FIXNUM);
     Check_Type(max_packets, T_FIXNUM);
     args.mosq = client->mosq;
     args.timeout = NUM2INT(timeout);
     args.max_packets = NUM2INT(max_packets);
+  retry_once:
     ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -1453,6 +1472,7 @@ static VALUE rb_mosquitto_client_loop(VALUE obj, VALUE timeout, VALUE max_packet
            rb_memerror();
            break;
        case MOSQ_ERR_NO_CONN:
+           RetryNotConnectedOnce();
            MosquittoError("client not connected to broker");
            break;
        case MOSQ_ERR_CONN_LOST:
@@ -1505,12 +1525,15 @@ static VALUE rb_mosquitto_client_loop_forever(VALUE obj, VALUE timeout, VALUE ma
 {
     struct nogvl_loop_args args;
     int ret;
+    struct timeval time;
+    bool retried = false;
     MosquittoGetClient(obj);
     Check_Type(timeout, T_FIXNUM);
     Check_Type(max_packets, T_FIXNUM);
     args.mosq = client->mosq;
     args.timeout = NUM2INT(timeout);
     args.max_packets = NUM2INT(max_packets);
+  retry_once:
     ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_forever_nogvl, (void *)&args, rb_mosquitto_client_loop_forever_ubf, client);
     switch (ret) {
        case MOSQ_ERR_INVAL:
@@ -1520,6 +1543,7 @@ static VALUE rb_mosquitto_client_loop_forever(VALUE obj, VALUE timeout, VALUE ma
            rb_memerror();
            break;
        case MOSQ_ERR_NO_CONN:
+           RetryNotConnectedOnce();
            MosquittoError("client not connected to broker");
            break;
        case MOSQ_ERR_CONN_LOST:
