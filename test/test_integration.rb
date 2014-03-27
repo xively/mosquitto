@@ -574,6 +574,8 @@ class TestIntegration < MosquittoTestCase
 
     wait{ connected }
 
+    sleep 2
+
     IO.for_fd(client1.socket).close
 
     sleep 3
