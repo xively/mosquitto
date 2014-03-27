@@ -10,6 +10,7 @@ class TestIntegration < MosquittoTestCase
   CLIENT_IDS = %w(test_integration test_lwt test_clean_session test_duplicate)
 
   def setup
+    super
     @result = nil
     @client = nil
     connected = false
@@ -27,6 +28,7 @@ class TestIntegration < MosquittoTestCase
   end
 
   def teardown
+    super
     disconnected, connected = false, false
     @client.on_disconnect do |rc|
       disconnected = true
@@ -557,7 +559,8 @@ class TestIntegration < MosquittoTestCase
   end
 
   def test_lwt
-    assert @client.subscribe(nil, "will/topic", Mosquitto::AT_MOST_ONCE)
+    connected = false
+    assert @client.subscribe(nil, "will/topic", Mosquitto::AT_LEAST_ONCE)
 
     will = "This is an LWT"
     client1 = Mosquitto::Client.new("test_lwt")
@@ -565,14 +568,16 @@ class TestIntegration < MosquittoTestCase
     client1.loop_start
     client1.will_set("will/topic", will, Mosquitto::AT_LEAST_ONCE, false)
     client1.on_connect do |rc|
-      sleep 2
-      client1.disconnect
+      connected = true
     end
     client1.connect(TEST_HOST, TEST_PORT, TIMEOUT)
 
-    client1.wait_readable
+    wait{ connected }
 
-    @result = nil
+    IO.for_fd(client1.socket).close
+
+    sleep 1
+
     wait{ @result }
     assert_equal will, @result
   end

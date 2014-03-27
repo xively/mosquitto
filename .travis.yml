@@ -21,7 +21,9 @@ rvm:
 env:
   - GC_STRESS=0
   - GC_STRESS=1
-script: "bundle exec rake"
+script:
+  - bundle exec rake test:unit
+  - bundle exec rake test:integration
 gemfile:
   - Gemfile
 notifications:

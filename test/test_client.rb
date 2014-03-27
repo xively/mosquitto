@@ -101,6 +101,7 @@ class TestClient < MosquittoTestCase
       client.disconnect
     end
     assert client.connect(TEST_HOST, TEST_PORT, TIMEOUT)
+    client.wait_readable
     assert client.disconnect
   ensure
     client.loop_stop(true)
@@ -112,6 +113,7 @@ class TestClient < MosquittoTestCase
       client.reconnect
     end
     assert client.connect(TEST_HOST, TEST_PORT, TIMEOUT)
+    client.wait_readable
     assert client.reconnect
   end
 

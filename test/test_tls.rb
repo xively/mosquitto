@@ -32,6 +32,7 @@ class TestTls < MosquittoTestCase
     client.tls_set(ssl_object('test-root-ca.crt'), nil, ssl_object('client.crt'), ssl_object('client.key'), nil)
     assert client.connect(TLS_TEST_HOST, TLS_TEST_PORT, TIMEOUT)
     client.wait_readable && sleep(3)
+
     assert connected
   ensure
     client.loop_stop(true)

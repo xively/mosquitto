@@ -10,6 +10,7 @@ class TestThreads < MosquittoTestCase
       publisher.loop_start
       assert publisher.connect(TEST_HOST, TEST_PORT, TIMEOUT)
       publisher.wait_readable
+
       publisher.loop_stop(true)
     end
 
@@ -18,6 +19,7 @@ class TestThreads < MosquittoTestCase
       subscriber.loop_start
       assert subscriber.connect(TEST_HOST, TEST_PORT, TIMEOUT)
       subscriber.wait_readable
+
       subscriber.loop_stop(true)
     end
     threads.each(&:join)
@@ -40,6 +42,7 @@ class TestThreads < MosquittoTestCase
       end
       assert subscriber.connect(TEST_HOST, TEST_PORT, TIMEOUT)
       subscriber.wait_readable && sleep(2)
+
       subscriber.loop_stop(true)
     end
 
@@ -56,7 +59,8 @@ class TestThreads < MosquittoTestCase
         end
       end
       assert publisher.connect(TEST_HOST, TEST_PORT, TIMEOUT)
-      publisher.wait_readable && sleep(2)
+      publisher.wait_readable && sleep(2)\
+
       assert_equal published, 26
       publisher.loop_stop(true)
     end

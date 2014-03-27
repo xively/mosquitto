@@ -17,25 +17,20 @@ Rake::ExtensionTask.new('mosquitto') do |ext|
   CLEAN.include 'lib/**/mosquitto_ext.*'
 end
 
-desc 'Run mosquitto tests'
-Rake::TestTask.new(:test) do |t|
-  t.test_files = Dir.glob("test/**/test_*.rb")
-  t.verbose = true
-  t.warning = true
-end
+namespace :test do
+  desc 'Run mosquitto tests'
+  Rake::TestTask.new(:unit) do |t|
+    t.test_files = Dir.glob("test/**/test_*.rb").reject{|t| t =~ /integration/ }
+    t.verbose = true
+    t.warning = true
+  end
 
-desc 'Run mosquitto integration tests'
-Rake::TestTask.new(:integration) do |t|
-  t.test_files = Dir.glob("test/test_integration.rb")
-  t.verbose = true
-  t.warning = true
-end
-
-desc 'Run mosquitto TLS tests'
-Rake::TestTask.new(:tls) do |t|
-  t.test_files = Dir.glob("test/test_tls.rb")
-  t.verbose = true
-  t.warning = true
+  desc 'Run mosquitto integration tests'
+  Rake::TestTask.new(:integration) do |t|
+    t.test_files = Dir.glob("test/test_integration.rb")
+    t.verbose = true
+    t.warning = true
+  end
 end
 
 namespace :debug do
@@ -45,5 +40,7 @@ namespace :debug do
   end
 end
 
-task :test => :compile
+task 'test:unit' => :compile
+task 'test:integration' => :compile
+task :test => ['test:unit', 'test:integration']
 task :default => :test
