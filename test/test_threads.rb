@@ -41,7 +41,7 @@ class TestThreads < MosquittoTestCase
         subscriber.subscribe(nil, "test_pub_sub", Mosquitto::AT_MOST_ONCE)
       end
       assert subscriber.connect(TEST_HOST, TEST_PORT, TIMEOUT)
-      subscriber.wait_readable && sleep(2)
+      subscriber.wait_readable
 
       subscriber.loop_stop(true)
     end
@@ -59,7 +59,7 @@ class TestThreads < MosquittoTestCase
         end
       end
       assert publisher.connect(TEST_HOST, TEST_PORT, TIMEOUT)
-      publisher.wait_readable && sleep(2)\
+      publisher.wait_readable
 
       assert_equal published, 26
       publisher.loop_stop(true)
