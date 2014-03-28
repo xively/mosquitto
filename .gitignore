@@ -19,3 +19,4 @@ pkg
 scratch
 ext/mosquitto/Makefile
 .yardoc
+test/mosquitto.conf
