@@ -174,18 +174,10 @@ static void rb_mosquitto_handle_callback(int *error_tag, mosquitto_callback_t *c
                                     args[0] = client->connect_cb;
                                     args[1] = (VALUE)1;
                                     args[2] = INT2NUM(cb->rc);
-                                    switch (cb->rc) {
-                                        case 1:
-                                                MosquittoError("connection refused (unacceptable protocol version)");
-                                                break;
-                                        case 2:
-                                                MosquittoError("connection refused (identifier rejected)");
-                                                break;
-                                        case 3:
-                                                MosquittoError("connection refused (broker unavailable)");
-                                                break;
-                                        default:
-                                                 rb_mosquitto_funcall_protected(error_tag, args);           
+                                    if (cb->rc == 0) {
+                                        rb_mosquitto_funcall_protected(error_tag, args);
+                                    } else {
+                                        MosquittoError(mosquitto_connack_string(cb->rc));
                                     }
                                   }
                                   break;
