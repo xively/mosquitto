@@ -502,6 +502,9 @@ class TestIntegration < MosquittoTestCase
 
     assert client1_connected
     assert client1_disconnected
+
+    client1.loop_stop(true)
+    client2.loop_stop(true)
   end
 
   def test_clean_session
@@ -528,6 +531,7 @@ class TestIntegration < MosquittoTestCase
     sleep 1
 
     assert_nil @result
+    client1.loop_stop(true)
   end
 
   def test_retain
@@ -560,17 +564,23 @@ class TestIntegration < MosquittoTestCase
     result = nil
     # clear retained message
     assert @client.publish(nil, "a/b/c", "", Mosquitto::AT_LEAST_ONCE, true)
+
+    client1.loop_stop(true)
   end
 
   def test_lwt
     connected = false
     assert @client.subscribe(nil, "will/topic", Mosquitto::AT_LEAST_ONCE)
 
+    sleep 1
+
     will = "This is an LWT"
     client1 = Mosquitto::Client.new("test_lwt")
     client1.logger = Logger.new(STDOUT)
     client1.loop_start
+    sleep 1
     client1.will_set("will/topic", will, Mosquitto::AT_LEAST_ONCE, false)
+    sleep 1
     client1.on_connect do |rc|
       connected = true
     end
@@ -578,13 +588,15 @@ class TestIntegration < MosquittoTestCase
 
     wait{ connected }
 
-    sleep 2
+    sleep 5
 
     IO.for_fd(client1.socket).close
 
-    sleep 3
+    sleep 5
 
     wait{ @result }
     assert_equal will, @result
+
+    client1.loop_stop(true)
   end
 end
