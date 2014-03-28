@@ -27,6 +27,7 @@ typedef struct {
 
 #define RetryNotConnectedOnce() \
     if (retried == false) { \
+        mosquitto_reconnect(client->mosq); \
         time.tv_sec  = 0; \
         time.tv_usec = 300 * 1000; \
         rb_thread_wait_for(time); \
