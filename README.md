@@ -222,7 +222,7 @@ Use 'bundle install' to install the necessary development and testing gems:
 
 ``` sh
 bundle install
-rake
+bundle exec rake
 ```
 Tests by default run against an MQTT server on localhost, which is expected to support TLS on port 8883 as well.
 
