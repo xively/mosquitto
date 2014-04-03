@@ -6,8 +6,11 @@ dir_config('mosquitto')
 
 # detect homebrew installs, via @brianmario
 if !have_library 'mosquitto'
-  base = if !`which brew`.empty?
-    File.expand_path(File.join(`which brew`, "..", ".."))
+  brew_exec_path = `which brew`
+  base = if !brew_exec_path.empty?
+    brew_exec_path.chomp!
+    brew_exec_path = File.readlink(brew_exec_path) if File.symlink?(brew_exec_path)
+    File.expand_path(File.join(brew_exec_path, "..", ".."))
   elsif File.exists?("/usr/local/Cellar/mosquitto")
     '/usr/local/Cellar'
   end
