@@ -437,7 +437,7 @@ class TestIntegration < MosquittoTestCase
     assert @client.subscribe(nil, "a/+/#", Mosquitto::AT_MOST_ONCE)
     assert @client.subscribe(nil, "#", Mosquitto::AT_MOST_ONCE)
 
-    sleep 1
+    sleep 3
 
     @result = nil
     expected = "should get everything"
