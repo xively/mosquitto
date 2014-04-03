@@ -1647,7 +1647,7 @@ static VALUE rb_mosquitto_client_loop_stop(VALUE obj, VALUE force)
     ret = (int)rb_thread_call_without_gvl(rb_mosquitto_client_loop_stop_nogvl, (void *)&args, RUBY_UBF_IO, 0);
     switch (ret) {
        case MOSQ_ERR_INVAL:
-           MosquittoError("invalid input params");
+           MosquittoError("Threaded main loop not running for this client. Are you sure you haven't already called Mosquitto::Client#loop_stop ?");
            break;
        case MOSQ_ERR_NOT_SUPPORTED :
            MosquittoError("thread support is not available");
