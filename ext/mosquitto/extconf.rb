@@ -4,20 +4,36 @@ RbConfig::MAKEFILE_CONFIG['CC'] = ENV['CC'] if ENV['CC']
 
 dir_config('mosquitto')
 
+def error(message)
+  STDERR.puts "\n\n"
+  STDERR.puts "***************************************************************************************"
+  STDERR.puts "*************** #{message} ***************"
+  STDERR.puts "***************************************************************************************"
+  exit(1)
+end
+
 # detect homebrew installs, via @brianmario
 if !have_library 'mosquitto'
-  brew_exec_path = `which brew`
-  base = if !brew_exec_path.empty?
-    brew_exec_path.chomp!
-    brew_exec_path = File.readlink(brew_exec_path) if File.symlink?(brew_exec_path)
-    File.expand_path(File.join(brew_exec_path, "..", ".."))
-  elsif File.exists?("/usr/local/Cellar/mosquitto")
-    '/usr/local/Cellar'
-  end
-  p base
-  if base and mosquitto = Dir[File.join(base, 'Cellar/mosquitto/*')].sort.last
-    $INCFLAGS << " -I#{mosquitto}/include "
-    $LDFLAGS  << " -L#{mosquitto}/lib "
+  if RUBY_PLATFORM =~ /darwin/
+    brew_exec_path = `which brew`
+    base = if !brew_exec_path.empty?
+      brew_exec_path.chomp!
+      brew_exec_path = File.readlink(brew_exec_path) if File.symlink?(brew_exec_path)
+      File.expand_path(File.join(brew_exec_path, "..", ".."))
+    elsif File.exists?("/usr/local/Cellar/mosquitto")
+      '/usr/local/Cellar'
+    end
+
+    if base and mosquitto = Dir[File.join(base, 'Cellar/mosquitto/*')].sort.last
+      $INCFLAGS << " -I#{mosquitto}/include "
+      $LDFLAGS  << " -L#{mosquitto}/lib "
+    else
+      error("libmosquitto required - install homebrew (http://brew.sh/) and run 'brew install mosquitto'")
+    end
+  elsif RUBY_PLATFORM =~ /linux/
+    error("libmosquitto required - see https://github.com/xively/mosquitto#linux-ubuntu and https://github.com/xively/mosquitto#building-libmosquitto-from-source")
+  else
+    error("libmosquitto required - please see http://mosquitto.org/download/ for installation instructions for your platform (#{RUBY_PLATFORM})")
   end
 end
 
