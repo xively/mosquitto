@@ -11,7 +11,7 @@ if !have_library 'mosquitto'
   elsif File.exists?("/usr/local/Cellar/mosquitto")
     '/usr/local/Cellar'
   end
-
+  p base
   if base and mosquitto = Dir[File.join(base, 'Cellar/mosquitto/*')].sort.last
     $INCFLAGS << " -I#{mosquitto}/include "
     $LDFLAGS  << " -L#{mosquitto}/lib "

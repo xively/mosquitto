@@ -502,9 +502,6 @@ class TestIntegration < MosquittoTestCase
 
     assert client1_connected
     assert client1_disconnected
-
-    client1.loop_stop(true)
-    client2.loop_stop(true)
   end
 
   def test_clean_session
