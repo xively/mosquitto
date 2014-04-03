@@ -588,12 +588,11 @@ class TestIntegration < MosquittoTestCase
     sleep 5
 
     IO.for_fd(client1.socket).close
+    client1.destroy
 
     sleep 5
 
     wait{ @result }
     assert_equal will, @result
-
-    client1.loop_stop(true)
   end
 end

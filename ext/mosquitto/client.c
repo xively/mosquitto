@@ -446,7 +446,7 @@ static void rb_mosquitto_free_client(void *ptr)
                 mosquitto_loop_stop(client->mosq, true);
                 rb_mosquitto_client_reap_event_thread(client);
             }
-            mosquitto_destroy(client->mosq);
+            if (client->mosq != NULL) mosquitto_destroy(client->mosq);
         }
         xfree(client);
     }
@@ -1826,6 +1826,30 @@ static VALUE rb_mosquitto_client_want_write(VALUE obj)
 
 /*
  * call-seq:
+ *   client.destroy -> Boolean
+ *
+ * Free memory associated with a mosquitto client instance. Used in integration tests only.
+ *
+ * @return [true] true when memory freed
+ * @example
+ *   client.destroy
+ *
+ */
+static VALUE rb_mosquitto_client_destroy(VALUE obj)
+{
+    MosquittoGetClient(obj);
+    if (!NIL_P(client->callback_thread)) {
+        mosquitto_stop_waiting_for_callbacks(client);
+        mosquitto_loop_stop(client->mosq, true);
+        rb_mosquitto_client_reap_event_thread(client);
+    }
+    mosquitto_destroy(client->mosq);
+    client->mosq = NULL;
+    return Qtrue;
+}
+
+/*
+ * call-seq:
  *   client.reconnect_delay_set(2, 10, true) -> Boolean
  *
  * Control the behaviour of the client when it has unexpectedly disconnected in
@@ -2200,4 +2224,8 @@ void _init_rb_mosquitto_client()
     rb_define_method(rb_cMosquittoClient, "on_subscribe", rb_mosquitto_client_on_subscribe, -1);
     rb_define_method(rb_cMosquittoClient, "on_unsubscribe", rb_mosquitto_client_on_unsubscribe, -1);
     rb_define_method(rb_cMosquittoClient, "on_log", rb_mosquitto_client_on_log, -1);
+
+    /* For integration testing only (will) */
+    rb_define_method(rb_cMosquittoClient, "destroy", rb_mosquitto_client_destroy, 0);
+
 }
