@@ -29,6 +29,4 @@ gemfile:
 notifications:
   recipients:
     - lourens@methodmissing.com
-branches:
-  only:
-    - master
+    - errordeveloper@gmail.com
