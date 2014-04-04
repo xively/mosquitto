@@ -21,6 +21,7 @@ class MosquittoTestCase < Test::Unit::TestCase
   undef_method :default_test if method_defined? :default_test
 
   def wait(&condition)
+    sleep 1
     Timeout.timeout(10) do
       loop do
         sleep(0.2)
