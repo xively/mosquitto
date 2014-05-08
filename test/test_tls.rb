@@ -23,7 +23,7 @@ class TestTls < MosquittoTestCase
   def test_connect
     connected = false
     client = Mosquitto::Client.new
-    client.logger = Logger.new(STDOUT)
+    #client.logger = Logger.new(STDOUT)
     assert client.loop_start
     client.on_connect do |rc|
       connected = true

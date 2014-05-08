@@ -33,7 +33,7 @@ class TestThreads < MosquittoTestCase
     threads << Thread.new do
       subscriber = Mosquitto::Client.new
       subscriber.loop_start
-      subscriber.logger = Logger.new(STDOUT)
+      #subscriber.logger = Logger.new(STDOUT)
       subscriber.on_message do |msg|
         messages << msg.to_s
       end
@@ -49,7 +49,7 @@ class TestThreads < MosquittoTestCase
     threads << Thread.new do
       publisher = Mosquitto::Client.new
       publisher.loop_start
-      publisher.logger = Logger.new(STDOUT)
+      #publisher.logger = Logger.new(STDOUT)
       publisher.on_publish do |mid|
         published += 1
       end

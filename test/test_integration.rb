@@ -16,7 +16,7 @@ class TestIntegration < MosquittoTestCase
     connected = false
     @client = Mosquitto::Client.new(nil, true)
     @client.loop_start
-    @client.logger = Logger.new(STDOUT)
+    #@client.logger = Logger.new(STDOUT)
     @client.on_connect do |rc|
       connected = true
     end
@@ -480,7 +480,7 @@ class TestIntegration < MosquittoTestCase
     client2 = nil
     client1 = Mosquitto::Client.new("test_duplicate")
     client1.loop_start
-    client1.logger = Logger.new(STDOUT)
+    #client1.logger = Logger.new(STDOUT)
     client1.on_connect do |rc|
       client1_connected = true
     end
@@ -495,7 +495,7 @@ class TestIntegration < MosquittoTestCase
 
     client2 = Mosquitto::Client.new("test_duplicate")
     client2.loop_start
-    client2.logger = Logger.new(STDOUT)
+    #client2.logger = Logger.new(STDOUT)
     client2.connect(TEST_HOST, TEST_PORT, TIMEOUT)
 
     client2.wait_readable
@@ -506,7 +506,7 @@ class TestIntegration < MosquittoTestCase
 
   def test_clean_session
     client1 = Mosquitto::Client.new("test_clean_session")
-    client1.logger = Logger.new(STDOUT)
+    #client1.logger = Logger.new(STDOUT)
     client1.loop_start
     client1.will_set("l/w/t", "This is an LWT", Mosquitto::AT_LEAST_ONCE, false)
     client1.connect(TEST_HOST, TEST_PORT, TIMEOUT)
@@ -541,7 +541,7 @@ class TestIntegration < MosquittoTestCase
 
     result = nil
     client1 = Mosquitto::Client.new(nil, true)
-    client1.logger = Logger.new(STDOUT)
+    #client1.logger = Logger.new(STDOUT)
     client1.loop_start
     client1.on_message do |msg|
       result = msg.to_s
@@ -573,7 +573,7 @@ class TestIntegration < MosquittoTestCase
 
     will = "This is an LWT"
     client1 = Mosquitto::Client.new("test_lwt")
-    client1.logger = Logger.new(STDOUT)
+    #client1.logger = Logger.new(STDOUT)
     client1.loop_start
     sleep 1
     client1.will_set("will/topic", will, Mosquitto::AT_LEAST_ONCE, false)

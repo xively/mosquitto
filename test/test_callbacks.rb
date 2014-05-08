@@ -6,7 +6,7 @@ class TestCallbacks < MosquittoTestCase
   def test_connect_disconnect_callback
     connected, disconnected = false
     client = Mosquitto::Client.new
-    client.logger = Logger.new(STDOUT)
+    #client.logger = Logger.new(STDOUT)
     assert client.loop_start
     client.on_connect do |rc|
       connected = true
@@ -45,7 +45,7 @@ class TestCallbacks < MosquittoTestCase
     subscribed = false
     unsubscribed = false
     client = Mosquitto::Client.new
-    client.logger = Logger.new(STDOUT)
+    #client.logger = Logger.new(STDOUT)
     assert client.loop_start
     client.on_connect do |rc|
       assert client.subscribe(nil, "test_sub_unsub", Mosquitto::AT_MOST_ONCE)
