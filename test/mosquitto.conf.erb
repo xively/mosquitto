@@ -403,7 +403,7 @@ require_certificate true
 # Note that if the broker is running as a Windows service it will default to
 # "log_dest none" and neither stdout nor stderr logging is available.
 # Use "log_dest none" if you wish to disable logging.
-#log_dest stderr
+log_dest stderr
 
 # Types of messages to log. Use multiple log_type lines for logging
 # multiple types of messages.
@@ -411,7 +411,7 @@ require_certificate true
 # none, subscribe, unsubscribe, all.
 # Note that debug type messages are for decoding the incoming/outgoing
 # network packets. They are not logged in "topics".
-#log_type error
+log_type error
 #log_type warning
 #log_type notice
 #log_type information
